@@ -20,7 +20,7 @@ import java.util.ArrayList;
 
 public class Castile extends ApplicationAdapter {
     public static final int MAP_WIDTH = 1;
-    public static final int MAP_LENGTH = 2;
+    public static final int MAP_LENGTH = 5;
 
     public static final int MAP_SIZE = MAP_WIDTH * MAP_LENGTH;
 
@@ -39,7 +39,7 @@ public class Castile extends ApplicationAdapter {
                 + "attribute vec4 a_color;\n"
                 + "attribute vec2 a_texCoord0;\n"
                 + "varying vec4 v_color;"
-                + "varying vec2 v_texCoords;"
+                + "varying vec2 v_texCoords;\n"
                 + "void main()                  \n"
                 + "{                            \n"
                 + "   v_color = a_color; \n"
@@ -77,7 +77,7 @@ public class Castile extends ApplicationAdapter {
         texture = new Texture("default.png");
 
         String vertexShaderB =
-                "uniform mat4 u_mvpMatrix;                   \n"
+                          "uniform mat4 u_mvpMatrix;                   \n"
                         + "attribute vec4 a_position;                  \n"
                         + "attribute vec2 a_texcoords;\n"
                         + "attribute vec4 a_color;\n"
@@ -90,7 +90,7 @@ public class Castile extends ApplicationAdapter {
                         + "   gl_Position = u_mvpMatrix * a_position;  \n"
                         + "}                            \n";
         String fragmentShaderB =
-                "#ifdef GL_ES\n"
+                          "#ifdef GL_ES\n"
                         + "precision mediump float;\n"
                         + "#endif\n"
                         + "varying vec2 v_texCoords;\n"
@@ -113,8 +113,9 @@ public class Castile extends ApplicationAdapter {
             }
         }
 
-        cam = new PerspectiveCamera(67, 2f * (4f/3f), 2f);
+        cam = new PerspectiveCamera(67f, 1f * (4f/3f), 1f);
         cam.position.set(0,0.5f,-1.5f);
+        System.out.println(cam.near + " " + cam.far);
 
         Vector3 axis = new Vector3(0, 1, 0);
         float angle = 180;
@@ -130,12 +131,16 @@ public class Castile extends ApplicationAdapter {
 
         Gdx.gl20.glViewport(0, 0, Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight());
         Gdx.gl20.glClearColor(0.2f, 0.2f, 0.2f, 1);
-        Gdx.gl20.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        Gdx.gl20.glClearDepthf(cam.far);
+
+        Gdx.gl20.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
         Gdx.gl20.glEnable(GL20.GL_TEXTURE_2D);
         Gdx.gl20.glEnable(GL20.GL_BLEND);
         Gdx.gl20.glEnable(GL20.GL_CULL_FACE);
         Gdx.gl20.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+
         drawBackground();
+
         drawTerrain();
 
         Gdx.graphics.setTitle("Frames / Second : " + Gdx.graphics.getFramesPerSecond());
@@ -176,6 +181,9 @@ public class Castile extends ApplicationAdapter {
     }
 
     void drawBackground() {
+        //stop 3D objects from clipping the background
+        Gdx.gl20.glDisable(GL20.GL_DEPTH_TEST);
+
         texture.bind();
         shader.begin();
         shader.setUniformi("u_texture", 0);
@@ -183,8 +191,8 @@ public class Castile extends ApplicationAdapter {
         shader.end();
     }
 
-    void drawTerrain()
-    {
+    void drawTerrain() {
+        Gdx.gl20.glEnable(GL20.GL_DEPTH_TEST);
         textureB.bind();
         shaderB.begin();
         shaderB.setUniformi("u_texture", 0);
@@ -273,14 +281,12 @@ public class Castile extends ApplicationAdapter {
                 vertList.add(verts);
                 short[] curIndices = new short[indices.length];
                 for(int j = 0; j < indices.length; j++) {
-                    curIndices[j] = (short) (indices[j] + (36*i));
+                    curIndices[j] = (short) (indices[j] + (24*i));
                 }
                 indList.add(curIndices);
                 i++;
             }
         }
-
-        System.out.println(vertList.size() + " " + indList.size());
         mesh.setVertices(vertList.toArray());
         mesh.setIndices(indList.toArray());
 
