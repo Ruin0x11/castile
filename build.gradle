@@ -22,6 +22,7 @@ allprojects {
         ashleyVersion = '1.7.0'
         aiVersion = '1.8.0'
         artemisVersion = '1.3.1'
+        troveVersion = '3.0.3'
     }
 
     repositories {
@@ -63,6 +64,7 @@ project(":core") {
     dependencies {
         compile "com.badlogicgames.gdx:gdx:$gdxVersion"
         compile "net.onedaybeard.artemis:artemis-odb:$artemisVersion"
+        compile "net.sf.trove4j:trove4j:$troveVersion"
     }
 }
 

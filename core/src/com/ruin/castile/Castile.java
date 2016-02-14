@@ -2,23 +2,35 @@ package com.ruin.castile;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Graphics;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
+import gnu.trove.list.TFloatList;
+import gnu.trove.list.TShortList;
+import gnu.trove.list.array.TFloatArrayList;
+import gnu.trove.list.array.TShortArrayList;
 
 import java.nio.FloatBuffer;
+import java.nio.ShortBuffer;
+import java.util.ArrayList;
 
 public class Castile extends ApplicationAdapter {
+    public static final int MAP_WIDTH = 1;
+    public static final int MAP_LENGTH = 2;
+
+    public static final int MAP_SIZE = MAP_WIDTH * MAP_LENGTH;
+
     ShaderProgram shader, shaderB;
     Mesh mesh, meshB;
     Texture texture, textureB;
     Matrix4 matrix = new Matrix4();
-    Tile[][] tiles = new Tile[1][1];
+    Tile[][] tiles = new Tile[MAP_WIDTH][MAP_LENGTH];
     PerspectiveCamera cam;
-    float rotationSpeed = 0.5f;
+    float rotationSpeed = 1f;
 
     @Override
     public void create () {
@@ -94,21 +106,26 @@ public class Castile extends ApplicationAdapter {
         meshB = genTile();
         meshB.getVertexAttribute(VertexAttributes.Usage.Position).alias = "a_position";
         textureB = new Texture("badlogic.jpg");
-        tiles[0][0] = new Tile();
+
+        for(int i = 0; i < MAP_WIDTH; i++) {
+            for(int j = 0; j < MAP_LENGTH; j++) {
+                tiles[i][j] = new Tile();
+            }
+        }
 
         cam = new PerspectiveCamera(67, 2f * (4f/3f), 2f);
-        cam.position.set(0,0.5f,1.5f);
+        cam.position.set(0,0.5f,-1.5f);
+
+        Vector3 axis = new Vector3(0, 1, 0);
+        float angle = 180;
+        cam.rotate(axis, angle);
 
     }
-
-    Vector3 axis = new Vector3(1, 1, 0);
-    float angle = 0;
 
     @Override
     public void render () {
         handleInput();
-        matrix.setToRotation(axis, angle);
-        //cam.rotate(axis, 5);
+        //matrix.setToRotation(axis, angle);
         cam.update();
 
         Gdx.gl20.glViewport(0, 0, Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight());
@@ -120,26 +137,28 @@ public class Castile extends ApplicationAdapter {
         Gdx.gl20.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
         drawBackground();
         drawTerrain();
+
+        Gdx.graphics.setTitle("Frames / Second : " + Gdx.graphics.getFramesPerSecond());
     }
 
     private void handleInput() {
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
-            cam.translate(-0.05f, 0, 0);
-        }
-        if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
             cam.translate(0.05f, 0, 0);
         }
+        if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
+            cam.translate(-0.05f, 0, 0);
+        }
         if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
-            cam.translate(0, -0.05f, 0);
-        }
-        if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
-            cam.translate(0, 0.05f, 0);
-        }
-        if (Gdx.input.isKeyPressed(Input.Keys.Z)) {
             cam.translate(0, 0, -0.05f);
         }
-        if (Gdx.input.isKeyPressed(Input.Keys.Q)) {
+        if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
             cam.translate(0, 0, 0.05f);
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.Z)) {
+            cam.translate(0, -0.05f, 0);
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.Q)) {
+            cam.translate(0, 0.05f, 0);
         }
         if (Gdx.input.isKeyPressed(Input.Keys.W)) {
             cam.rotate(-rotationSpeed, 0, 1, 0);
@@ -176,96 +195,94 @@ public class Castile extends ApplicationAdapter {
 
 
     public Mesh genTile() {
-        Mesh mesh = new Mesh(true, 4*6, 36, new VertexAttribute(VertexAttributes.Usage.Position, 3, "a_position"),
+        Mesh mesh = new Mesh(true, 24 * MAP_SIZE, 36 * MAP_SIZE, new VertexAttribute(VertexAttributes.Usage.Position, 3, "a_position"),
                 new VertexAttribute(VertexAttributes.Usage.ColorUnpacked, 4, "a_color"),
                 new VertexAttribute(VertexAttributes.Usage.TextureCoordinates, 2, "a_texcoords"));
 
 
         /** Cube vertices */
-        short[] indices = {0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 11, 12, 15, 14, 12, 14, 13, 16, 17, 18, 16, 18, 19,
-                20, 23, 22, 20, 22, 21};
+        short[] indices = {0, 2, 1, 0, 3, 2,
+                           4, 5, 6, 4, 6, 7,
+                           8, 9, 10, 8, 10, 11,
+                           12, 15, 14, 12, 14, 13,
+                           16, 17, 18, 16, 18, 19,
+                           20, 23, 22, 20, 22, 21};
 
-        float[] cubeVerts = {
-                -0.5f, -0.5f, -0.5f,
-                -0.5f, -0.5f, 0.5f,
-                0.5f, -0.5f, 0.5f,
-                0.5f, -0.5f, -0.5f,
 
-                -0.5f, 0.5f, -0.5f,
-                -0.5f, 0.5f, 0.5f,
-                0.5f, 0.5f, 0.5f,
-                0.5f, 0.5f, -0.5f,
+        //    F ----- G       ^Y
+        //   /|      /|       |
+        //  E ------H |       |
+        //  | |     | |       |------>X
+        //  | |B ---|-|C     /
+        //  |/      |/      /
+        //  A ------D      Z
 
-                -0.5f, -0.5f, -0.5f,
-                -0.5f, 0.5f, -0.5f,
-                0.5f, 0.5f, -0.5f,
-                0.5f, -0.5f, -0.5f,
-
-                -0.5f, -0.5f, 0.5f,
-                -0.5f, 0.5f, 0.5f,
-                0.5f, 0.5f, 0.5f,
-                0.5f, -0.5f, 0.5f,
-
-                -0.5f, -0.5f, -0.5f,
-                -0.5f, -0.5f, 0.5f,
-                -0.5f, 0.5f, 0.5f,
-                -0.5f, 0.5f, -0.5f,
-
-                0.5f, -0.5f, -0.5f,
-                0.5f, -0.5f, 0.5f,
-                0.5f, 0.5f, 0.5f,
-                0.5f, 0.5f, -0.5f,};
-
-        FloatBuffer buf = FloatBuffer.allocate(1 * 1 * 9 * 4 * 6);
+        TFloatList vertList = new TFloatArrayList(9 * 24 * MAP_SIZE);
+        TShortList indList = new TShortArrayList(36 * MAP_SIZE);
         int i = 0;
-        for(int x = 0; x < 1; x++) {
-            for(int y = 0; y < 1; y++) {
+        for(int x = 0; x < MAP_WIDTH; x++) {
+            for(int y = 0; y < MAP_LENGTH; y++) {
                 Tile t = tiles[x][y];
-                float size = 0.5f;
+                float size = 0.3f;
+                Vector3 pta = new Vector3( x - size,  0 - size,  y - size );
+                Vector3 ptb = new Vector3( x - size,  0 - size,  y + size );
+                Vector3 ptc = new Vector3( x + size,  0 - size,  y + size );
+                Vector3 ptd = new Vector3( x + size,  0 - size,  y - size );
+                Vector3 pte = new Vector3( x - size,  0 + size,  y - size );
+                Vector3 ptf = new Vector3( x - size,  0 + size,  y + size );
+                Vector3 ptg = new Vector3( x + size,  0 + size,  y + size );
+                Vector3 pth = new Vector3( x + size,  0 + size,  y - size );
+
                 float[] verts = {
                         // bottom (-y)
-                        -size, -size, -size, 1, 1, 1, 1, 0, 1,
-                        -size, -size, size, 1, 1, 1, 1, 1, 1,
-                        size, -size, size, 1, 1, 1, 1, 1, 0,
-                        size, -size, -size, 1, 1, 1, 1, 0, 0,
+                        pta.x, pta.y, pta.z, 1, 1, 1, 1, 0, 1,
+                        ptb.x, ptb.y, ptb.z, 1, 1, 1, 1, 1, 1,
+                        ptc.x, ptc.y, ptc.z, 1, 1, 1, 1, 1, 0,
+                        ptd.x, ptd.y, ptd.z, 1, 1, 1, 1, 0, 0,
 
                         // top (+y)
-                        -size, size, -size, 1, 1, 1, 1, 0, 1,
-                        -size, size, size, 1, 1, 1, 1, 1, 1,
-                        size, size, size, 1, 1, 1, 1, 1, 0,
-                        size, size, -size, 1, 1, 1, 1, 0, 0,
+                        pte.x, pte.y, pte.z, 1, 1, 1, 1, 0, 1,
+                        ptf.x, ptf.y, ptf.z, 1, 1, 1, 1, 1, 1,
+                        ptg.x, ptg.y, ptg.z, 1, 1, 1, 1, 1, 0,
+                        pth.x, pth.y, pth.z, 1, 1, 1, 1, 0, 0,
 
                         // back (-z)
-                        -size, -size, -size, 1, 1, 1, 1, 0, 1,
-                        -size, size, -size, 1, 1, 1, 1, 1, 1,
-                        size, size, -size, 1, 1, 1, 1, 1, 0,
-                        size, -size, -size, 1, 1, 1, 1, 0, 0,
+                        pta.x, pta.y, pta.z, 1, 1, 1, 1, 0, 1,
+                        pte.x, pte.y, pte.z, 1, 1, 1, 1, 1, 1,
+                        pth.x, pth.y, pth.z, 1, 1, 1, 1, 1, 0,
+                        ptd.x, ptd.y, ptd.z, 1, 1, 1, 1, 0, 0,
 
                         // front (+z)
-                        -size, -size, size, 1, 1, 1, 1, 0, 1,
-                        -size, size, size, 1, 1, 1, 1, 1, 1,
-                        size, size, size, 1, 1, 1, 1, 1, 0,
-                        size, -size, size, 1, 1, 1, 1, 0, 0,
+                        ptb.x, ptb.y, ptb.z, 1, 1, 1, 1, 0, 1,
+                        ptf.x, ptf.y, ptf.z, 1, 1, 1, 1, 1, 1,
+                        ptg.x, ptg.y, ptg.z, 1, 1, 1, 1, 1, 0,
+                        ptc.x, ptc.y, ptc.z, 1, 1, 1, 1, 0, 0,
 
                         // left (-x)
-                        -size, -size, -size, 1, 1, 1, 1, 0, 1,
-                        -size, -size, size, 1, 1, 1, 1, 1, 1,
-                        -size, size, size, 1, 1, 1, 1, 1, 0,
-                        -size, size, -size, 1, 1, 1, 1, 0, 0,
+                        pta.x, pta.y, pta.z, 1, 1, 1, 1, 0, 1,
+                        ptb.x, ptb.y, ptb.z, 1, 1, 1, 1, 1, 1,
+                        ptf.x, ptf.y, ptf.z, 1, 1, 1, 1, 1, 0,
+                        pte.x, pte.y, pte.z, 1, 1, 1, 1, 0, 0,
 
                         // right (+x)
-                        size, -size, -size, 1, 1, 1, 1, 0, 1,
-                        size, -size, size, 1, 1, 1, 1, 1, 1,
-                        size, size, size, 1, 1, 1, 1, 1, 0,
-                        size, size, -size, 1, 1, 1, 1, 0, 0,
+                        ptd.x, ptd.y, ptd.z, 1, 1, 1, 1, 0, 1,
+                        ptc.x, ptc.y, ptc.z, 1, 1, 1, 1, 1, 1,
+                        ptg.x, ptg.y, ptg.z, 1, 1, 1, 1, 1, 0,
+                        pth.x, pth.y, pth.z, 1, 1, 1, 1, 0, 0,
                 };
-                buf.put(verts, i * 9 * 4 * 6, verts.length);
+                vertList.add(verts);
+                short[] curIndices = new short[indices.length];
+                for(int j = 0; j < indices.length; j++) {
+                    curIndices[j] = (short) (indices[j] + (36*i));
+                }
+                indList.add(curIndices);
                 i++;
             }
         }
 
-        mesh.setVertices(buf.array());
-        mesh.setIndices(indices);
+        System.out.println(vertList.size() + " " + indList.size());
+        mesh.setVertices(vertList.toArray());
+        mesh.setIndices(indList.toArray());
 
         return mesh;
     }
