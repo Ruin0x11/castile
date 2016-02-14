@@ -2,6 +2,7 @@ package com.ruin.castile;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
@@ -16,6 +17,8 @@ public class Castile extends ApplicationAdapter {
     Texture texture, textureB;
     Matrix4 matrix = new Matrix4();
     Tile[][] tiles = new Tile[1][1];
+    PerspectiveCamera cam;
+    float rotationSpeed = 0.5f;
 
     @Override
     public void create () {
@@ -92,6 +95,10 @@ public class Castile extends ApplicationAdapter {
         meshB.getVertexAttribute(VertexAttributes.Usage.Position).alias = "a_position";
         textureB = new Texture("badlogic.jpg");
         tiles[0][0] = new Tile();
+
+        cam = new PerspectiveCamera(67, 2f * (4f/3f), 2f);
+        cam.position.set(0,0.5f,1.5f);
+
     }
 
     Vector3 axis = new Vector3(1, 1, 0);
@@ -99,8 +106,10 @@ public class Castile extends ApplicationAdapter {
 
     @Override
     public void render () {
-        angle += Gdx.graphics.getDeltaTime() * 45;
+        handleInput();
         matrix.setToRotation(axis, angle);
+        //cam.rotate(axis, 5);
+        cam.update();
 
         Gdx.gl20.glViewport(0, 0, Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight());
         Gdx.gl20.glClearColor(0.2f, 0.2f, 0.2f, 1);
@@ -111,6 +120,33 @@ public class Castile extends ApplicationAdapter {
         Gdx.gl20.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
         drawBackground();
         drawTerrain();
+    }
+
+    private void handleInput() {
+        if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
+            cam.translate(-0.05f, 0, 0);
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
+            cam.translate(0.05f, 0, 0);
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
+            cam.translate(0, -0.05f, 0);
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
+            cam.translate(0, 0.05f, 0);
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.Z)) {
+            cam.translate(0, 0, -0.05f);
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.Q)) {
+            cam.translate(0, 0, 0.05f);
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.W)) {
+            cam.rotate(-rotationSpeed, 0, 1, 0);
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.E)) {
+            cam.rotate(rotationSpeed, 0, 1, 0);
+        }
     }
 
     @Override
@@ -133,7 +169,7 @@ public class Castile extends ApplicationAdapter {
         textureB.bind();
         shaderB.begin();
         shaderB.setUniformi("u_texture", 0);
-        shaderB.setUniformMatrix("u_mvpMatrix", matrix);
+        shaderB.setUniformMatrix("u_mvpMatrix", cam.combined);
         meshB.render(shaderB, GL20.GL_TRIANGLES);
         shaderB.end();
     }
