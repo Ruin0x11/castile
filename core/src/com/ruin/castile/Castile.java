@@ -19,8 +19,8 @@ import java.nio.ShortBuffer;
 import java.util.ArrayList;
 
 public class Castile extends ApplicationAdapter {
-    public static final int MAP_WIDTH = 1;
-    public static final int MAP_LENGTH = 5;
+    public static final int MAP_WIDTH = 4;
+    public static final int MAP_LENGTH = 4;
 
     public static final int MAP_SIZE = MAP_WIDTH * MAP_LENGTH;
 
@@ -29,8 +29,10 @@ public class Castile extends ApplicationAdapter {
     Texture texture, textureB;
     Matrix4 matrix = new Matrix4();
     Tile[][] tiles = new Tile[MAP_WIDTH][MAP_LENGTH];
-    PerspectiveCamera cam;
+    Camera cam;
     float rotationSpeed = 1f;
+
+    Vector3 yourPosition;
 
     @Override
     public void create () {
@@ -102,24 +104,25 @@ public class Castile extends ApplicationAdapter {
                         + "}";
         // @on
 
-        shaderB = new ShaderProgram(vertexShaderB, fragmentShaderB);
-        meshB = genTile();
-        meshB.getVertexAttribute(VertexAttributes.Usage.Position).alias = "a_position";
-        textureB = new Texture("badlogic.jpg");
-
         for(int i = 0; i < MAP_WIDTH; i++) {
             for(int j = 0; j < MAP_LENGTH; j++) {
                 tiles[i][j] = new Tile();
             }
         }
 
-        cam = new PerspectiveCamera(67f, 1f * (4f/3f), 1f);
-        cam.position.set(0,0.5f,-1.5f);
-        System.out.println(cam.near + " " + cam.far);
+        shaderB = new ShaderProgram(vertexShaderB, fragmentShaderB);
+        meshB = genTile();
+        meshB.getVertexAttribute(VertexAttributes.Usage.Position).alias = "a_position";
+        textureB = new Texture("groundB.png");
+
+        cam = new PerspectiveCamera(19f, 2f * (4f/3f), 2f);
 
         Vector3 axis = new Vector3(0, 1, 0);
+        yourPosition = new Vector3(-13, 15, -13);
         float angle = 180;
-        cam.rotate(axis, angle);
+        //cam.rotate(axis, angle);
+
+        cam.lookAt(2,-2,2);
 
     }
 
@@ -127,6 +130,7 @@ public class Castile extends ApplicationAdapter {
     public void render () {
         handleInput();
         //matrix.setToRotation(axis, angle);
+        cam.position.set(yourPosition);
         cam.update();
 
         Gdx.gl20.glViewport(0, 0, Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight());
@@ -143,27 +147,27 @@ public class Castile extends ApplicationAdapter {
 
         drawTerrain();
 
-        Gdx.graphics.setTitle("Frames / Second : " + Gdx.graphics.getFramesPerSecond());
+        Gdx.graphics.setTitle("Frames / Second : " + Gdx.graphics.getFramesPerSecond() + " | " + yourPosition + " " + cam.direction);
     }
 
     private void handleInput() {
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
-            cam.translate(0.05f, 0, 0);
+            yourPosition.add(0, 0, -0.05f);
         }
         if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
-            cam.translate(-0.05f, 0, 0);
+            yourPosition.add(0, 0, 0.05f);
         }
         if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
-            cam.translate(0, 0, -0.05f);
+            yourPosition.add(-0.05f, 0, 0);
         }
         if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
-            cam.translate(0, 0, 0.05f);
+            yourPosition.add(0.05f, 0, 0);
         }
         if (Gdx.input.isKeyPressed(Input.Keys.Z)) {
-            cam.translate(0, -0.05f, 0);
+            yourPosition.add(0, -0.05f, 0);
         }
         if (Gdx.input.isKeyPressed(Input.Keys.Q)) {
-            cam.translate(0, 0.05f, 0);
+            yourPosition.add(0, 0.05f, 0);
         }
         if (Gdx.input.isKeyPressed(Input.Keys.W)) {
             cam.rotate(-rotationSpeed, 0, 1, 0);
@@ -176,6 +180,9 @@ public class Castile extends ApplicationAdapter {
     @Override
     public void dispose () {
         mesh.dispose();
+        texture.dispose();
+        shader.dispose();
+        meshB.dispose();
         texture.dispose();
         shader.dispose();
     }
@@ -217,13 +224,13 @@ public class Castile extends ApplicationAdapter {
                            20, 23, 22, 20, 22, 21};
 
 
-        //    F ----- G       ^Y
-        //   /|      /|       |
-        //  E ------H |       |
-        //  | |     | |       |------>X
-        //  | |B ---|-|C     /
-        //  |/      |/      /
-        //  A ------D      Z
+        //    F ----- G
+        //   /|      /|
+        //  E ------H |   ^ Y  Z
+        //  | |     | |   |   /
+        //  | |B ---|-|C  |  /
+        //  |/      |/    | /
+        //  A ------D     |------>X
 
         TFloatList vertList = new TFloatArrayList(9 * 24 * MAP_SIZE);
         TShortList indList = new TShortArrayList(36 * MAP_SIZE);
@@ -231,15 +238,18 @@ public class Castile extends ApplicationAdapter {
         for(int x = 0; x < MAP_WIDTH; x++) {
             for(int y = 0; y < MAP_LENGTH; y++) {
                 Tile t = tiles[x][y];
-                float size = 0.3f;
-                Vector3 pta = new Vector3( x - size,  0 - size,  y - size );
-                Vector3 ptb = new Vector3( x - size,  0 - size,  y + size );
-                Vector3 ptc = new Vector3( x + size,  0 - size,  y + size );
-                Vector3 ptd = new Vector3( x + size,  0 - size,  y - size );
-                Vector3 pte = new Vector3( x - size,  0 + size,  y - size );
-                Vector3 ptf = new Vector3( x - size,  0 + size,  y + size );
-                Vector3 ptg = new Vector3( x + size,  0 + size,  y + size );
-                Vector3 pth = new Vector3( x + size,  0 + size,  y - size );
+                float size = 0.5f;
+
+                Vector3 pta = new Vector3( x - size,  0,  y - size );
+                Vector3 ptb = new Vector3( x - size,  0,  y + size );
+                Vector3 ptc = new Vector3( x + size,  0,  y + size );
+                Vector3 ptd = new Vector3( x + size,  0,  y - size );
+                Vector3 pte = new Vector3( x - size,  0.1f*t.heightData.get(Tile.Corner.UPPER_SOUTH_WEST),  y - size );
+                Vector3 ptf = new Vector3( x - size,  0.1f*t.heightData.get(Tile.Corner.UPPER_SOUTH_EAST),  y + size );
+                Vector3 ptg = new Vector3( x + size,  0.1f*t.heightData.get(Tile.Corner.UPPER_NORTH_EAST),  y + size );
+                Vector3 pth = new Vector3( x + size,  0.1f*t.heightData.get(Tile.Corner.UPPER_NORTH_WEST),  y - size );
+
+
 
                 float[] verts = {
                         // bottom (-y)
@@ -249,34 +259,34 @@ public class Castile extends ApplicationAdapter {
                         ptd.x, ptd.y, ptd.z, 1, 1, 1, 1, 0, 0,
 
                         // top (+y)
-                        pte.x, pte.y, pte.z, 1, 1, 1, 1, 0, 1,
-                        ptf.x, ptf.y, ptf.z, 1, 1, 1, 1, 1, 1,
-                        ptg.x, ptg.y, ptg.z, 1, 1, 1, 1, 1, 0,
-                        pth.x, pth.y, pth.z, 1, 1, 1, 1, 0, 0,
-
-                        // back (-z)
-                        pta.x, pta.y, pta.z, 1, 1, 1, 1, 0, 1,
                         pte.x, pte.y, pte.z, 1, 1, 1, 1, 1, 1,
-                        pth.x, pth.y, pth.z, 1, 1, 1, 1, 1, 0,
-                        ptd.x, ptd.y, ptd.z, 1, 1, 1, 1, 0, 0,
+                        ptf.x, ptf.y, ptf.z, 1, 1, 1, 1, 1, 0,
+                        ptg.x, ptg.y, ptg.z, 1, 1, 1, 1, 0, 0,
+                        pth.x, pth.y, pth.z, 1, 1, 1, 1, 0, 1,
 
-                        // front (+z)
+                        // back (-z) (south)
+                        pta.x, pta.y, pta.z, 1, 1, 1, 1, 1, 1,
+                        pte.x, pte.y, pte.z, 1, 1, 1, 1, 1, 0,
+                        pth.x, pth.y, pth.z, 1, 1, 1, 1, 0, 0,
+                        ptd.x, ptd.y, ptd.z, 1, 1, 1, 1, 0, 1,
+
+                        // front (+z) (north)
                         ptb.x, ptb.y, ptb.z, 1, 1, 1, 1, 0, 1,
-                        ptf.x, ptf.y, ptf.z, 1, 1, 1, 1, 1, 1,
+                        ptf.x, ptf.y, ptf.z, 1, 1, 1, 1, 0, 0,
                         ptg.x, ptg.y, ptg.z, 1, 1, 1, 1, 1, 0,
-                        ptc.x, ptc.y, ptc.z, 1, 1, 1, 1, 0, 0,
+                        ptc.x, ptc.y, ptc.z, 1, 1, 1, 1, 1, 1,
 
-                        // left (-x)
+                        // left (-x) (west)
                         pta.x, pta.y, pta.z, 1, 1, 1, 1, 0, 1,
                         ptb.x, ptb.y, ptb.z, 1, 1, 1, 1, 1, 1,
                         ptf.x, ptf.y, ptf.z, 1, 1, 1, 1, 1, 0,
                         pte.x, pte.y, pte.z, 1, 1, 1, 1, 0, 0,
 
-                        // right (+x)
-                        ptd.x, ptd.y, ptd.z, 1, 1, 1, 1, 0, 1,
-                        ptc.x, ptc.y, ptc.z, 1, 1, 1, 1, 1, 1,
-                        ptg.x, ptg.y, ptg.z, 1, 1, 1, 1, 1, 0,
-                        pth.x, pth.y, pth.z, 1, 1, 1, 1, 0, 0,
+                        // right (+x) (east)
+                        ptd.x, ptd.y, ptd.z, 1, 1, 1, 1, 1, 1,
+                        ptc.x, ptc.y, ptc.z, 1, 1, 1, 1, 0, 1,
+                        ptg.x, ptg.y, ptg.z, 1, 1, 1, 1, 0, 0,
+                        pth.x, pth.y, pth.z, 1, 1, 1, 1, 1, 0,
                 };
                 vertList.add(verts);
                 short[] curIndices = new short[indices.length];
