@@ -61,7 +61,7 @@ public class Tile {
         heightData.put(Corner.UPPER_NORTH_WEST, 10);
         heightData.put(Corner.UPPER_NORTH_EAST, 10);
         heightData.put(Corner.UPPER_SOUTH_WEST, 10);
-        heightData.put(Corner.UPPER_SOUTH_EAST, 0);
+        heightData.put(Corner.UPPER_SOUTH_EAST, 10);
         heightData.put(Corner.LOWER_NORTH_NORTH_WEST, 0);
         heightData.put(Corner.LOWER_NORTH_NORTH_EAST, 0);
         heightData.put(Corner.LOWER_WEST_NORTH_WEST, 0);
@@ -78,15 +78,36 @@ public class Tile {
         }
     }
 
-    public class ScreenData {
+    public int getHeight() {
+        return (heightData.get(Corner.UPPER_NORTH_WEST) +
+                heightData.get(Corner.UPPER_NORTH_EAST) +
+                heightData.get(Corner.UPPER_SOUTH_WEST) +
+                heightData.get(Corner.UPPER_SOUTH_EAST)) / 4;
+    }
+
+    public void addHeight(int dm) {
+        heightData.put(Corner.UPPER_NORTH_WEST, heightData.get(Corner.UPPER_NORTH_WEST) + dm);
+        heightData.put(Corner.UPPER_NORTH_EAST, heightData.get(Corner.UPPER_NORTH_EAST) + dm);
+        heightData.put(Corner.UPPER_SOUTH_WEST, heightData.get(Corner.UPPER_SOUTH_WEST) + dm);
+        heightData.put(Corner.UPPER_SOUTH_EAST, heightData.get(Corner.UPPER_SOUTH_EAST) + dm);
+    }
+
+    public static class ScreenData {
         public int texUnit;
         public Vector2i texCoords;
         public Vector2i texRegion;
 
         public ScreenData() {
             texUnit = 0;
-            texCoords = new Vector2i(0,0);
-            texRegion = new Vector2i(24, 24);
+            texCoords = new Vector2i(154, 308);
+            texRegion = new Vector2i(24, 96);
         }
+
+        public ScreenData(Vector2i coords, Vector2i region) {
+            texUnit = 0;
+            texCoords = coords;
+            texRegion = region;
+        }
+
     }
 }
