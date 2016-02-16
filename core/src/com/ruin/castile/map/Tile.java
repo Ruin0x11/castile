@@ -1,4 +1,6 @@
-package com.ruin.castile;
+package com.ruin.castile.map;
+
+import com.ruin.castile.util.Vector2i;
 
 import java.util.EnumMap;
 
@@ -49,6 +51,8 @@ public class Tile {
         UPPER_SHADOW_TWO,
     }
 
+    public static final int DEFAULT_DM = 10;
+
     float size = 0.5f;
 
     public EnumMap<Corner, Integer> heightData;
@@ -56,12 +60,20 @@ public class Tile {
     public EnumMap<Screen, ScreenData> screenData;
 
     public Tile() {
+        this(DEFAULT_DM);
+    }
+
+    public Tile(int height) {
+        this(height, height, height, height);
+    }
+
+    public Tile(int nw, int ne, int sw, int se) {
         heightData = new EnumMap<Corner, Integer>(Corner.class);
-        
-        heightData.put(Corner.UPPER_NORTH_WEST, 10);
-        heightData.put(Corner.UPPER_NORTH_EAST, 10);
-        heightData.put(Corner.UPPER_SOUTH_WEST, 10);
-        heightData.put(Corner.UPPER_SOUTH_EAST, 10);
+
+        heightData.put(Corner.UPPER_NORTH_WEST, nw);
+        heightData.put(Corner.UPPER_NORTH_EAST, ne);
+        heightData.put(Corner.UPPER_SOUTH_WEST, sw);
+        heightData.put(Corner.UPPER_SOUTH_EAST, se);
         heightData.put(Corner.LOWER_NORTH_NORTH_WEST, 0);
         heightData.put(Corner.LOWER_NORTH_NORTH_EAST, 0);
         heightData.put(Corner.LOWER_WEST_NORTH_WEST, 0);
