@@ -24,7 +24,7 @@ public class GameMapImpl implements GameMap {
                 tiles[i][j] = new Tile();
                 Tile.ScreenData dat = new Tile.ScreenData(new Vector2i(24 * (getWidth()-i), 24 * (getLength()-j)), new Vector2i(24, 24));
                 tiles[i][j].screenData.put(Tile.Screen.UPPER, dat);
-                tiles[i][j].addHeight(i*j*2);
+                tiles[i][j].addHeight(i*j);
             }
         }
     }
@@ -69,7 +69,7 @@ public class GameMapImpl implements GameMap {
         int indexX = (int)x;
         int indexY = (int)y;
 
-        if(indexX > getWidth()-1 || indexY > getLength()-1 || indexX < 0 || indexY < 0)
+        if(indexX > getWidth()-1 || indexY > getLength()-1 || x < 0 || y < 0)
             return 0;
 
         if(tiles[indexX][indexY] == null)
