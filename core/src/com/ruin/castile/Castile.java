@@ -34,7 +34,8 @@ public class Castile extends ApplicationAdapter {
     Decal decal;
 
     Vector3 yourPosition;
-    Vector3 cameraOffset = new Vector3(-10, 10, -10);
+    Vector3 yourPositionPending;
+    Vector3 cameraOffset = new Vector3(-20, 20, -20);
     Vector3 cameraPosition;
     Vector3 cameraDirection;
     Vector3 cameraUp;
@@ -88,6 +89,7 @@ public class Castile extends ApplicationAdapter {
         cam = new PerspectiveCamera(10f, 2f * (4f / 3f), 2f);
 
         yourPosition = new Vector3(0, 0, 0);
+        yourPositionPending = yourPosition.cpy();
         float angle = 180;
         //cam.rotate(axis, angle);
 
@@ -99,8 +101,8 @@ public class Castile extends ApplicationAdapter {
         cameraUp = new Vector3(cam.up);
 
         decals = new DecalBatch(new CameraGroupStrategy(cam));
-        decal = Decal.newDecal(1, 1, new TextureRegion(new Texture("kaitou.png"), 50, 50), true);
-        decal.setPosition(00f, 1.5f, 0f);
+        decal = Decal.newDecal(1, 1, new TextureRegion(new Texture("kaitou.png")), true);
+        decal.setPosition(.0f, 1.5f, .0f);
         decals.add(decal);
     }
 
@@ -110,18 +112,22 @@ public class Castile extends ApplicationAdapter {
     public void render() {
         //matrix.setToRotation(axis, angle);
         float curHeight = map.getHeightAtPoint(yourPosition.x, yourPosition.z);
+        yourPosition.y = curHeight*0.1f;
         //System.out.println(curHeight);
-        orbitPoint(yourPosition, angle);
-        Vector3 nowCameraPosition = new Vector3(yourPosition).add(cameraOffset.x, cameraOffset.y, cameraOffset.z);
-        Vector3 diff = new Vector3(nowCameraPosition).sub(cam.position);
-        cam.position.x += diff.x; //* lerp;
-        cam.position.y += diff.y; //* lerp;
-        cam.position.z += diff.z; //* lerp;
         handleInput();
+        Vector3 diff = yourPosition.cpy().sub(yourPositionPending);
+        yourPositionPending.x += diff.x * lerp;
+        yourPositionPending.y += diff.y * lerp;
+        yourPositionPending.z += diff.z * lerp;
         //cam.position.set(nowCameraPosition);
         //cam.direction.set(cameraDirection);
         //cam.up.set(cameraUp);
+
+        Vector3 lastPosition = yourPositionPending.cpy().add(cameraOffset);
+        cam.position.set(lastPosition);
         cam.update();
+
+        cameraPosition = lastPosition.cpy();
 
         Gdx.gl20.glViewport(0, 0, Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight());
         Gdx.gl20.glClearColor(0.2f, 0.2f, 0.2f, 1);
@@ -138,10 +144,11 @@ public class Castile extends ApplicationAdapter {
         drawTerrain();
 
         decal.lookAt(cam.position, cam.up);
+        decal.setScale(1.5f);
         decals.add(decal);
         decals.flush();
 
-        Gdx.graphics.setTitle("Frames / Second : " + Gdx.graphics.getFramesPerSecond() + " | " + cam.position + " " + cam.direction);
+        Gdx.graphics.setTitle("Frames / Second : " + Gdx.graphics.getFramesPerSecond() + " | " + yourPosition + " " + yourPositionPending);
     }
 
     float angle = 0;
@@ -160,26 +167,18 @@ public class Castile extends ApplicationAdapter {
             yourPosition.add(0.05f, 0, 0);
         }
         if (Gdx.input.isKeyPressed(Input.Keys.I)) {
-            doCameraOrbit(0, -0.11f);
+            orbitPointCamera(yourPosition, 1);
         }
-        if (Gdx.input.isKeyPressed(Input.Keys.J)) {
-            doCameraOrbit(0.11f, 0);
-        }
-        if (Gdx.input.isKeyPressed(Input.Keys.K)) {
-            doCameraOrbit(0, 0.11f);
+        else if (Gdx.input.isKeyPressed(Input.Keys.K)) {
+            orbitPointCamera(yourPosition, -1);
         }
         if (Gdx.input.isKeyPressed(Input.Keys.L)) {
-            doCameraOrbit(-0.11f, 0);
-        }
-        if (Gdx.input.isKeyPressed(Input.Keys.O)) {
             angle = 1;
-        }
-
-        else if (Gdx.input.isKeyPressed(Input.Keys.U)) {
+            orbitPoint(yourPosition, angle, new Vector3(0, 1, 0));
+        } else if (Gdx.input.isKeyPressed(Input.Keys.J)) {
             angle = -1;
-        }
-        else
-        {
+            orbitPoint(yourPosition, angle, new Vector3(0, 1, 0));
+        } else {
             angle = 0;
         }
     }
@@ -214,7 +213,7 @@ public class Castile extends ApplicationAdapter {
 
     void doCameraOrbit(float yaw, float pitch) {
         Vector3 camDirection = new Vector3(cam.position).sub(yourPosition).nor();
-        Vector3 camUp = new Vector3(0,1,0);
+        Vector3 camUp = cam.up.nor();
         Vector3 camRight = new Vector3(camDirection).crs(camUp);
         Vector3 camRightB = new Vector3(camRight);
         camUp = camRightB.crs(camDirection);
@@ -263,12 +262,14 @@ public class Castile extends ApplicationAdapter {
 
     final Plane xzPlane = new Plane(new Vector3(0, 1, 0), 0);
 
-    /** * Rotates the camera around a point in 3D by 1 degree each call.
-     * @author radioking from Badlogic forum (libGDX)
+    /**
+     * Rotates the camera around a point in 3D by 1 degree each call.
+     *
      * @param origin The vector to rotate.
-     * @param angle defines rotation direction
+     * @param angle  defines rotation direction
+     * @author radioking from Badlogic forum (libGDX)
      */
-    public void orbitPoint(Vector3 origin, float angle) {
+    public void orbitPoint(Vector3 origin, float angle, Vector3 axis) {
         // (1) get intersection point for
         // camera viewing direction and xz-plane
         cam.lookAt(origin.x, origin.y, origin.z);
@@ -288,7 +289,38 @@ public class Castile extends ApplicationAdapter {
 
         // (4) rotate camera by 1° around y-axis
         // according to winding clockwise/counter-clockwise
-        cam.rotate(angle, 0, 1, 0);
+        cam.rotate(axis, angle);
+
+        // (5) move camera back by radius
+        Vector3 orbitReturnVector = new Vector3(cam.direction).scl(-orbitRadius);
+        cameraOffset.add(orbitReturnVector);
+    }
+
+    public void orbitPointCamera(Vector3 origin, float angle) {
+        // (1) get intersection point for
+        // camera viewing direction and xz-plane
+        cam.lookAt(origin.x, origin.y, origin.z);
+        cam.update();
+
+        Vector3 intersectionPoint = new Vector3();
+        Ray camViewRay = new Ray(cameraOffset, cam.direction);
+        Intersector.intersectRayPlane(camViewRay, xzPlane, intersectionPoint);
+
+        // (2) calculate radius between
+        // camera position projected on xz-plane
+        // and the intersection point from (1)
+        float orbitRadius = intersectionPoint.dst(new Vector3(cameraOffset));
+
+        // (3) move camera to intersection point from (1)
+        cameraOffset.set(intersectionPoint);
+
+        Vector3 camDirection = new Vector3(cam.position).sub(origin).nor();
+        Vector3 camUp = cam.up.nor();
+        Vector3 camRight = new Vector3(camDirection).crs(camUp);
+
+        // (4) rotate camera by 1° around y-axis
+        // according to winding clockwise/counter-clockwise
+        cam.rotate(camRight, angle);
 
         // (5) move camera back by radius
         Vector3 orbitReturnVector = new Vector3(cam.direction).scl(-orbitRadius);
