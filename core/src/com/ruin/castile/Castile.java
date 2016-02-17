@@ -10,10 +10,8 @@ import com.badlogic.gdx.graphics.g3d.decals.CameraGroupStrategy;
 import com.badlogic.gdx.graphics.g3d.decals.Decal;
 import com.badlogic.gdx.graphics.g3d.decals.DecalBatch;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
-import com.badlogic.gdx.math.Intersector;
-import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Matrix4;
-import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.*;
+import com.badlogic.gdx.math.collision.Ray;
 import com.ruin.castile.map.*;
 
 public class Castile extends ApplicationAdapter {
@@ -27,7 +25,7 @@ public class Castile extends ApplicationAdapter {
     Mesh backgroundMesh;
     Texture backgroundTexture;
     Camera cam;
-    float rotationSpeed = 0.05f;
+    float rotationSpeed = 1f;
     Texture[] textureMaps = new Texture[2];
 
     GameMap map;
@@ -36,12 +34,15 @@ public class Castile extends ApplicationAdapter {
     Decal decal;
 
     Vector3 yourPosition;
-    Vector3 cameraOffset = new Vector3(-1, 5, -1);
+    Vector3 cameraOffset = new Vector3(-20, 20, -20);
+    Vector3 cameraPosition;
+    Vector3 cameraDirection;
+    Vector3 cameraUp;
 
     float lerp = 0.2f;
 
     @Override
-    public void create () {
+    public void create() {
 
         FileHandle file = Gdx.files.internal("shaders/bg_vert.glsl");
         String backgroundVertexShader = file.readString();
@@ -54,17 +55,17 @@ public class Castile extends ApplicationAdapter {
             Gdx.app.exit();
         }
 
-        float[] c =        {0,0,0.75f,1,
-                            0,0,0.75f,1,
-                            0,0,0,1,
-                            0,0,0,1};
+        float[] c = {0, 0, 0.75f, 1,
+                0, 0, 0.75f, 1,
+                0, 0, 0, 1,
+                0, 0, 0, 1};
 
         backgroundMesh = new Mesh(true, 4, 6, VertexAttribute.Position(), VertexAttribute.ColorUnpacked(), VertexAttribute.TexCoords(0));
-        backgroundMesh.setVertices(new float[]   {-1.0f, -1.0f, 0, c[0], c[1], c[2], c[3], 0, 1,
-                                        1.0f, -1.0f, 0,  c[4], c[5], c[6], c[7], 1, 1,
-                                        1.0f, 1.0f, 0,   c[8], c[9], c[10], c[11], 1, 0,
-                                        -1.0f, 1.0f, 0,  c[12], c[13], c[14], c[15], 0, 0});
-        backgroundMesh.setIndices(new short[] {0, 1, 2, 2, 3, 0});
+        backgroundMesh.setVertices(new float[]{-1.0f, -1.0f, 0, c[0], c[1], c[2], c[3], 0, 1,
+                1.0f, -1.0f, 0, c[4], c[5], c[6], c[7], 1, 1,
+                1.0f, 1.0f, 0, c[8], c[9], c[10], c[11], 1, 0,
+                -1.0f, 1.0f, 0, c[12], c[13], c[14], c[15], 0, 0});
+        backgroundMesh.setIndices(new short[]{0, 1, 2, 2, 3, 0});
         backgroundTexture = new Texture("default.png");
 
         file = Gdx.files.internal("shaders/map_vert.glsl");
@@ -84,38 +85,46 @@ public class Castile extends ApplicationAdapter {
         GameMapMesh mapMesh = tessellator.generateMapMesh(map);
         map.setMesh(mapMesh);
 
-        cam = new PerspectiveCamera(55f, 2f * (4f/3f), 2f);
+        cam = new PerspectiveCamera(10f, 2f * (4f / 3f), 2f);
 
         yourPosition = new Vector3(0, 0, 0);
         float angle = 180;
         //cam.rotate(axis, angle);
 
-        cam.position.set(-5,5,0);
-        cam.lookAt(2,-2,2);
+        cam.position.set(-20, 20, -20);
+        cam.lookAt(yourPosition);
+
+        cameraPosition = new Vector3(cam.position);
+        cameraDirection = new Vector3(cam.direction);
+        cameraUp = new Vector3(cam.up);
 
         decals = new DecalBatch(new CameraGroupStrategy(cam));
-        decal = Decal.newDecal(1, 1, new TextureRegion(new Texture("kaitou.png")), true);
-        decal.setPosition(1,2,1);
+        decal = Decal.newDecal(1, 1, new TextureRegion(new Texture("kaitou.png"), 50, 50), true);
+        decal.setPosition(1, 2, 1);
         decals.add(decal);
     }
 
     Vector3 axis = new Vector3(0, 1, 0);
 
     @Override
-    public void render () {
-        handleInput();
+    public void render() {
         //matrix.setToRotation(axis, angle);
         float curHeight = map.getHeightAtPoint(yourPosition.x, yourPosition.z);
         //System.out.println(curHeight);
-        Vector3 camPosition = new Vector3(yourPosition.x + cameraOffset.x, yourPosition.y + cameraOffset.y + curHeight*.1f, yourPosition.z + cameraOffset.z);
-        cam.position.x += (camPosition.x - cam.position.x) * lerp;
-        cam.position.y += (camPosition.y - cam.position.y) * lerp;
-        cam.position.z += (camPosition.z - cam.position.z) * lerp;
+        Vector3 nowCameraPosition = new Vector3(yourPosition).add(cameraOffset.x, cameraOffset.y + curHeight * .1f, cameraOffset.z);
+        Vector3 diff = new Vector3(nowCameraPosition).sub(cam.position);
+        cam.position.x += diff.x * lerp;
+        cam.position.y += diff.y * lerp;
+        cam.position.z += diff.z * lerp;
+        handleInput();
+        //cam.position.set(nowCameraPosition);
+        cam.direction.set(cameraDirection);
+        cam.up.set(cameraUp);
         cam.update();
 
         Gdx.gl20.glViewport(0, 0, Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight());
         Gdx.gl20.glClearColor(0.2f, 0.2f, 0.2f, 1);
-        Gdx.gl20.glClearDepthf(cam.far*10);
+        Gdx.gl20.glClearDepthf(cam.far * 10);
 
         Gdx.gl20.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
         Gdx.gl20.glEnable(GL20.GL_TEXTURE_2D);
@@ -159,13 +168,29 @@ public class Castile extends ApplicationAdapter {
         if (Gdx.input.isKeyPressed(Input.Keys.E)) {
             cam.rotateAround(yourPosition, axis, rotationSpeed);
         }
-        if (Gdx.input.isKeyPressed(Input.Keys.F)) {
-            doCameraOrbit();
+        if (Gdx.input.isKeyPressed(Input.Keys.I)) {
+            doCameraOrbit(0, -0.11f);
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.J)) {
+            doCameraOrbit(0.11f, 0);
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.K)) {
+            doCameraOrbit(0, 0.11f);
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.L)) {
+            doCameraOrbit(-0.11f, 0);
+        }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.O)) {
+            orbitPoint(yourPosition, true);
+        }
+
+        if (Gdx.input.isKeyJustPressed(Input.Keys.U)) {
+            orbitPoint(yourPosition, false);
         }
     }
 
     @Override
-    public void dispose () {
+    public void dispose() {
         backgroundMesh.dispose();
         backgroundShader.dispose();
         backgroundShader.dispose();
@@ -192,21 +217,19 @@ public class Castile extends ApplicationAdapter {
         mapShader.end();
     }
 
-    void doCameraOrbit() {
-        Vector3 camDirection = cam.direction; //new Vector3(cam.position).sub(yourPosition).nor();
-        Vector3 camUp = new Vector3(cam.up);
+    void doCameraOrbit(float yaw, float pitch) {
+        Vector3 camDirection = new Vector3(cam.position).sub(yourPosition).nor();
+        Vector3 camUp = new Vector3(0,1,0);
         Vector3 camRight = new Vector3(camDirection).crs(camUp);
         Vector3 camRightB = new Vector3(camRight);
         camUp = camRightB.crs(camDirection);
-        Matrix4 matUpYaw = matrixFromAxisAngle(camUp.nor(), 0.05f);
-        Matrix4 matRightPitch = matrixFromAxisAngle(camRight.nor(), 0.00f);
+        Matrix4 matUpYaw = matrixFromAxisAngle(camUp.nor(), yaw);
+        Matrix4 matRightPitch = matrixFromAxisAngle(camRight.nor(), pitch);
 
-        Vector3 finalCam = new Vector3(cam.position).sub(yourPosition).rot(matUpYaw).rot(matRightPitch).add(yourPosition);
-        cam.position.set(finalCam);
-
+        Vector3 camPosition = new Vector3(cam.position).sub(yourPosition).rot(matUpYaw).rot(matRightPitch).add(yourPosition);
+        cam.position.set(camPosition.x, 20, camPosition.z);
         cam.lookAt(yourPosition);
     }
-
 
     public Matrix4 matrixFromAxisAngle(Vector3 axis, float angle) {
 
@@ -222,54 +245,63 @@ public class Castile extends ApplicationAdapter {
         // a1.y /= magnitude;
         // a1.z /= magnitude;
 
-        mat.val[Matrix4.M00] = c + axis.x*axis.x*t;
-        mat.val[Matrix4.M11] = c + axis.y*axis.y*t;
-        mat.val[Matrix4.M22] = c + axis.z*axis.z*t;
+        mat.val[Matrix4.M00] = c + axis.x * axis.x * t;
+        mat.val[Matrix4.M11] = c + axis.y * axis.y * t;
+        mat.val[Matrix4.M22] = c + axis.z * axis.z * t;
 
 
-        float tmp1 = axis.x*axis.y*t;
-        float tmp2 = axis.z*s;
+        float tmp1 = axis.x * axis.y * t;
+        float tmp2 = axis.z * s;
         mat.val[Matrix4.M10] = tmp1 + tmp2;
         mat.val[Matrix4.M01] = tmp1 - tmp2;
-        tmp1 = axis.x*axis.z*t;
-        tmp2 = axis.y*s;
+        tmp1 = axis.x * axis.z * t;
+        tmp2 = axis.y * s;
         mat.val[Matrix4.M20] = tmp1 - tmp2;
-        mat.val[Matrix4.M02] = tmp1 + tmp2;    tmp1 = axis.y*axis.z*t;
-        tmp2 = axis.x*s;
+        mat.val[Matrix4.M02] = tmp1 + tmp2;
+        tmp1 = axis.y * axis.z * t;
+        tmp2 = axis.x * s;
         mat.val[Matrix4.M21] = tmp1 + tmp2;
         mat.val[Matrix4.M12] = tmp1 - tmp2;
 
         return mat;
     }
 
-//    /** * Rotates the camera around a point in 3D by 1 degree each call.
-//     * @author radioking from Badlogic forum (libGDX)
-//     * @param origin The vector to rotate.
-//     * @param clockwise defines rotation direction
-//     */
-//    public void orbitPoint(Vector3 origin, boolean clockwise) {
-//        // (1) get intersection point for
-//        // camera viewing direction and xz-plane
-//        cam.lookAt(origin.x, origin.y, origin.z);
-//        cam.update();
-//        cam.apply(gl);
-//        camViewRay.set(cam.position, cam.direction);
-//        Intersector.intersectRayPlane(camViewRay, xzPlane, lookAtPoint);
-//
-//        // (2) calculate radius between
-//        // camera position projected on xz-plane
-//        // and the intersection point from (1)
-//        orbitRadius = lookAtPoint.dst(cameraPosition.set(cam.position));
-//
-//        // (3) move camera to intersection point from (1)
-//        cam.position.set(lookAtPoint);
-//
-//        // (4) rotate camera by 1° around y-axis
-//        // according to winding clockwise/counter-clockwise
-//        if(clockwise){ cam.rotate(-1, 0, 1, 0); } else { cam.rotate(1, 0, 1, 0); }
-//
-//        // (5) move camera back by radius
-//        orbitReturnVector.set(cam.direction.tmp().mul(-orbitRadius));
-//        cam.translate(orbitReturnVector.x, orbitReturnVector.y, orbitReturnVector.z);
-//    }
+    final Plane xzPlane = new Plane(new Vector3(0, 1, 0), 0);
+
+    /** * Rotates the camera around a point in 3D by 1 degree each call.
+     * @author radioking from Badlogic forum (libGDX)
+     * @param origin The vector to rotate.
+     * @param clockwise defines rotation direction
+     */
+    public void orbitPoint(Vector3 origin, boolean clockwise) {
+        // (1) get intersection point for
+        // camera viewing direction and xz-plane
+        cam.lookAt(origin.x, origin.y, origin.z);
+        cam.update();
+
+        Vector3 intersectionPoint = new Vector3();
+        Ray camViewRay = new Ray(cam.position, cam.direction);
+        Intersector.intersectRayPlane(camViewRay, xzPlane, intersectionPoint);
+
+        // (2) calculate radius between
+        // camera position projected on xz-plane
+        // and the intersection point from (1)
+        float orbitRadius = intersectionPoint.dst(new Vector3(cam.position));
+
+        // (3) move camera to intersection point from (1)
+        cam.position.set(intersectionPoint);
+
+        // (4) rotate camera by 1° around y-axis
+        // according to winding clockwise/counter-clockwise
+        if(clockwise) {
+            cam.rotate(-45, 0, 1, 0);
+        }
+        else {
+            cam.rotate(45, 0, 1, 0);
+        }
+
+        // (5) move camera back by radius
+        Vector3 orbitReturnVector = new Vector3(cam.direction).scl(-orbitRadius);
+        cam.position.add(orbitReturnVector);
+    }
 }
