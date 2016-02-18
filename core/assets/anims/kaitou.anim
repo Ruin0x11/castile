@@ -1,0 +1,40 @@
+{
+    "anims" : [
+    {
+        "name" : "IDLE",
+        "directions" : {
+            "SOUTH" : {
+                    "startCoords" : [[3, 914]],
+                    "sizes" : [[25, 53]]
+              },
+            "SOUTHWEST" : {
+                    "startCoords" : [[36, 913]],
+                    "sizes" : [[25, 54]]
+              },
+            "WEST" : {
+                    "startCoords" : [[70, 913]],
+                    "sizes" : [[21, 53]]
+              },
+            "NORTHWEST" : {
+                    "startCoords" : [[4, 970]],
+                    "sizes" : [[23, 51]]
+              },
+            "NORTH" : {
+                    "startCoords" : [[35, 970]],
+                    "sizes" : [[24, 51]]
+              },
+            "SOUTHEAST" : {
+                    "startCoords" : [[36, 913]],
+                    "sizes" : [[25, 54]]
+              },
+            "EAST" : {
+                    "startCoords" : [[70, 913]],
+                    "sizes" : [[21, 53]]
+              },
+            "NORTHEAST" : {
+                    "startCoords" : [[4, 970]],
+                    "sizes" : [[23, 51]]
+              }
+        }
+    }]
+}

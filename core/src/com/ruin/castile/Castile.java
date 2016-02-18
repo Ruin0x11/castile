@@ -12,6 +12,9 @@ import com.badlogic.gdx.graphics.g3d.decals.DecalBatch;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.*;
 import com.badlogic.gdx.math.collision.Ray;
+import com.ruin.castile.chara.AnimationType;
+import com.ruin.castile.chara.Direction;
+import com.ruin.castile.displayable.CharaDisplayable;
 import com.ruin.castile.map.*;
 
 public class Castile extends ApplicationAdapter {
@@ -20,13 +23,13 @@ public class Castile extends ApplicationAdapter {
 
     public static final int MAP_SIZE = MAP_WIDTH * MAP_LENGTH;
 
+    public static final int ROTATION_SPEED = 5;
+
     ShaderProgram backgroundShader, mapShader;
 
     Mesh backgroundMesh;
     Texture backgroundTexture;
     Camera cam;
-    float rotationSpeed = 1f;
-    Texture[] textureMaps = new Texture[2];
 
     GameMap map;
 
@@ -36,11 +39,15 @@ public class Castile extends ApplicationAdapter {
     Vector3 yourPosition;
     Vector3 yourPositionPending;
     Vector3 cameraOffset = new Vector3(-20, 20, -20);
-    Vector3 cameraPosition;
-    Vector3 cameraDirection;
-    Vector3 cameraUp;
+
+    Vector3 movementVector = new Vector3(0, 0, 0);
+
+    int pendingAngle = 0;
+    boolean clockwise = false;
 
     float lerp = 0.2f;
+
+    CharaDisplayable chara;
 
     @Override
     public void create() {
@@ -90,44 +97,46 @@ public class Castile extends ApplicationAdapter {
 
         yourPosition = new Vector3(0, 0, 0);
         yourPositionPending = yourPosition.cpy();
-        float angle = 180;
-        //cam.rotate(axis, angle);
 
-        cam.position.set(-20, 20, -20);
+        cam.position.set(cameraOffset);
         cam.lookAt(yourPosition);
 
-        cameraPosition = new Vector3(cam.position);
-        cameraDirection = new Vector3(cam.direction);
-        cameraUp = new Vector3(cam.up);
-
         decals = new DecalBatch(new CameraGroupStrategy(cam));
-        decal = Decal.newDecal(1, 1, new TextureRegion(new Texture("kaitou.png")), true);
-        decal.setPosition(.0f, 1.5f, .0f);
-        decals.add(decal);
+        chara = new CharaDisplayable(new Vector3(0,1.5f,0), "kaitou");
+        chara.animate(AnimationType.IDLE, Direction.SOUTH, 1);
     }
-
-    Vector3 axis = new Vector3(0, 1, 0);
 
     @Override
     public void render() {
+        handleInput();
         //matrix.setToRotation(axis, angle);
-        float curHeight = map.getHeightAtPoint(yourPosition.x, yourPosition.z);
+
+        if(pendingAngle > 0) {
+
+            if(clockwise) {
+                orbitPoint(yourPosition, 5, new Vector3(0, 1, 0));
+            }
+            else {
+                orbitPoint(yourPosition, -5, new Vector3(0, 1, 0));
+            }
+            pendingAngle -= 5;
+        }
+
+        if(!movementVector.isZero())
+            move(movementVector);
+        float curHeight = map.getHeightAtPoint(yourPosition.x+0.5f, yourPosition.z+0.5f);
         yourPosition.y = curHeight*0.1f;
         //System.out.println(curHeight);
-        handleInput();
         Vector3 diff = yourPosition.cpy().sub(yourPositionPending);
         yourPositionPending.x += diff.x * lerp;
         yourPositionPending.y += diff.y * lerp;
         yourPositionPending.z += diff.z * lerp;
-        //cam.position.set(nowCameraPosition);
-        //cam.direction.set(cameraDirection);
-        //cam.up.set(cameraUp);
 
         Vector3 lastPosition = yourPositionPending.cpy().add(cameraOffset);
         cam.position.set(lastPosition);
         cam.update();
 
-        cameraPosition = lastPosition.cpy();
+        movementVector.set(0, 0, 0);
 
         Gdx.gl20.glViewport(0, 0, Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight());
         Gdx.gl20.glClearColor(0.2f, 0.2f, 0.2f, 1);
@@ -143,8 +152,9 @@ public class Castile extends ApplicationAdapter {
 
         drawTerrain();
 
+        Decal decal = chara.getDecals()[0];
         decal.lookAt(cam.position, cam.up);
-        decal.setScale(1.5f);
+        decal.setDimensions(0.5f, 1.0f);
         decals.add(decal);
         decals.flush();
 
@@ -155,22 +165,16 @@ public class Castile extends ApplicationAdapter {
 
     private void handleInput() {
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
-            yourPosition.add(0, 0, -0.05f);
+            movementVector.add(-0.05f, 0, 0);
         }
         if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
-            yourPosition.add(0, 0, 0.05f);
+            movementVector.add(0.05f, 0, 0);
         }
         if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
-            yourPosition.add(-0.05f, 0, 0);
+            movementVector.add(0, 0, 0.05f);
         }
         if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
-            yourPosition.add(0.05f, 0, 0);
-        }
-        if (Gdx.input.isKeyPressed(Input.Keys.I)) {
-            orbitPointCamera(yourPosition, 1);
-        }
-        else if (Gdx.input.isKeyPressed(Input.Keys.K)) {
-            orbitPointCamera(yourPosition, -1);
+            movementVector.add(0, 0, -0.05f);
         }
         if (Gdx.input.isKeyPressed(Input.Keys.L)) {
             angle = 1;
@@ -181,6 +185,34 @@ public class Castile extends ApplicationAdapter {
         } else {
             angle = 0;
         }
+        if (Gdx.input.isKeyPressed(Input.Keys.I)) {
+            orbitPointCamera(yourPosition, 1);
+        }
+        else if (Gdx.input.isKeyPressed(Input.Keys.K)) {
+            orbitPointCamera(yourPosition, -1);
+        }
+        if(pendingAngle == 0) {
+            if (Gdx.input.isKeyJustPressed(Input.Keys.A)) {
+                clockwise = false;
+                pendingAngle = 45;
+            }
+            else if (Gdx.input.isKeyJustPressed(Input.Keys.D)) {
+                clockwise = true;
+                pendingAngle = 45;
+            }
+        }
+    }
+
+    public void move(Vector3 vec) {
+        Vector3 direction = vec.cpy().traMul(cam.view);
+        yourPosition.add(direction.x, 0, direction.z);
+        Vector3 norm = vec.cpy().nor();
+        float angle = MathUtils.atan2(norm.z, norm.x);
+        int octant = MathUtils.round( 8 * angle / (2*MathUtils.PI) + 8 + 2 ) % 8;
+
+        System.out.println(octant + " " + vec);
+        chara.animate(AnimationType.IDLE, Direction.values()[octant], 1);
+        chara.moveTo(yourPosition.cpy().add(0,.5f,0));
     }
 
     @Override
