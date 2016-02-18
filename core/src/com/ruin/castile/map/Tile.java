@@ -1,5 +1,6 @@
 package com.ruin.castile.map;
 
+import com.badlogic.gdx.math.Vector3;
 import com.ruin.castile.util.Vector2i;
 
 import java.util.EnumMap;
@@ -90,6 +91,10 @@ public class Tile {
         }
     }
 
+    public int getHeight(Corner corner) {
+        return heightData.get(corner);
+    }
+
     public int getHeight() {
         return (heightData.get(Corner.UPPER_NORTH_WEST) +
                 heightData.get(Corner.UPPER_NORTH_EAST) +
@@ -97,11 +102,40 @@ public class Tile {
                 heightData.get(Corner.UPPER_SOUTH_EAST)) / 4;
     }
 
+    public float getHeightAtPoint(float x, float z) {
+        Vector3 a, b, c;
+        if(x > z) {
+            // northwestern triangle
+            a = new Vector3(1, getHeight(Corner.UPPER_NORTH_WEST), 0);
+            b = new Vector3(0, getHeight(Corner.UPPER_SOUTH_EAST), 0);
+            c = new Vector3(1, getHeight(Corner.UPPER_NORTH_EAST), 1);
+        }
+        else {
+            // southeastern triangle
+            a = new Vector3(0, getHeight(Corner.UPPER_NORTH_WEST), 1);
+            b = new Vector3(0, getHeight(Corner.UPPER_SOUTH_WEST), 0);
+            c = new Vector3(1, getHeight(Corner.UPPER_NORTH_EAST), 1);
+        }
+
+        float i = -(c.z*b.y-a.z*b.y-c.z*a.y+
+                a.y*b.z+c.y*a.z-b.z*c.y);
+        float j = (a.z*c.x+b.z*a.x+c.z*b.x-
+                b.z*c.x-a.z*b.x-c.z*a.x);
+        float k = (b.y*c.x+a.y*b.x+c.y*a.x-
+                a.y*c.x-b.y*a.x-b.x*c.y);
+        float l = -i*a.x-j*a.y-k*a.z;
+        return -(i*x+k*z+l)/j;
+    }
+
     public void addHeight(int dm) {
-        heightData.put(Corner.UPPER_NORTH_WEST, heightData.get(Corner.UPPER_NORTH_WEST) + dm);
-        heightData.put(Corner.UPPER_NORTH_EAST, heightData.get(Corner.UPPER_NORTH_EAST) + dm);
-        heightData.put(Corner.UPPER_SOUTH_WEST, heightData.get(Corner.UPPER_SOUTH_WEST) + dm);
-        heightData.put(Corner.UPPER_SOUTH_EAST, heightData.get(Corner.UPPER_SOUTH_EAST) + dm);
+        addHeight(Corner.UPPER_NORTH_WEST, dm);
+        addHeight(Corner.UPPER_NORTH_EAST, dm);
+        addHeight(Corner.UPPER_SOUTH_WEST, dm);
+        addHeight(Corner.UPPER_SOUTH_EAST, dm);
+    }
+
+    public void addHeight(Corner corner, int dm) {
+        heightData.put(corner, heightData.get(corner) + dm);
     }
 
     public static class ScreenData {

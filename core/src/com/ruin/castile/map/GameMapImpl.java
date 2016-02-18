@@ -1,5 +1,6 @@
 package com.ruin.castile.map;
 
+import com.badlogic.gdx.math.Vector3;
 import com.ruin.castile.util.Vector2i;
 
 /**
@@ -25,6 +26,7 @@ public class GameMapImpl implements GameMap {
                 Tile.ScreenData dat = new Tile.ScreenData(new Vector2i(24 * (getWidth()-i), 24 * (getLength()-j)), new Vector2i(24, 24));
                 tiles[i][j].screenData.put(Tile.Screen.UPPER, dat);
                 tiles[i][j].addHeight(i*j);
+                tiles[i][j].addHeight(Tile.Corner.UPPER_SOUTH_EAST, 20);
             }
         }
     }
@@ -75,6 +77,6 @@ public class GameMapImpl implements GameMap {
         if(tiles[indexX][indexY] == null)
             return 0;
 
-        return tiles[indexX][indexY].getHeight();
+        return tiles[indexX][indexY].getHeightAtPoint(x - indexX, y-indexY);
     }
 }

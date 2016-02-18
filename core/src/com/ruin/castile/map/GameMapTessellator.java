@@ -66,9 +66,9 @@ public class GameMapTessellator {
 
                 float[] verts = {
                         // bottom (-y)
-                        pta.x, pta.y, pta.z, 1, 1, 1, 1, 0, 1,
-                        ptb.x, ptb.y, ptb.z, 1, 1, 1, 1, 1, 1,
-                        ptc.x, ptc.y, ptc.z, 1, 1, 1, 1, 1, 0,
+                        pta.x, pta.y, pta.z, 1, 1, 1, 1, 0, 0,
+                        ptb.x, ptb.y, ptb.z, 1, 1, 1, 1, 0, 0,
+                        ptc.x, ptc.y, ptc.z, 1, 1, 1, 1, 0, 0,
                         ptd.x, ptd.y, ptd.z, 1, 1, 1, 1, 0, 0,
 
                         // top (+y)

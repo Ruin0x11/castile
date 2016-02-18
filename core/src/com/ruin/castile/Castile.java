@@ -126,6 +126,9 @@ public class Castile extends ApplicationAdapter {
             move(movementVector);
         float curHeight = map.getHeightAtPoint(yourPosition.x+0.5f, yourPosition.z+0.5f);
         yourPosition.y = curHeight*0.1f;
+
+        chara.moveTo(yourPosition.cpy().add(0,.5f,0));
+
         //System.out.println(curHeight);
         Vector3 diff = yourPosition.cpy().sub(yourPositionPending);
         yourPositionPending.x += diff.x * lerp;
@@ -149,14 +152,8 @@ public class Castile extends ApplicationAdapter {
         Gdx.gl20.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
 
         drawBackground();
-
         drawTerrain();
-
-        Decal decal = chara.getDecals()[0];
-        decal.lookAt(cam.position, cam.up);
-        decal.setDimensions(0.5f, 1.0f);
-        decals.add(decal);
-        decals.flush();
+        drawCharas();
 
         Gdx.graphics.setTitle("Frames / Second : " + Gdx.graphics.getFramesPerSecond() + " | " + yourPosition + " " + yourPositionPending);
     }
@@ -204,15 +201,14 @@ public class Castile extends ApplicationAdapter {
     }
 
     public void move(Vector3 vec) {
+        //TODO: Needs to be in "world Y axis is up" space
         Vector3 direction = vec.cpy().traMul(cam.view);
         yourPosition.add(direction.x, 0, direction.z);
         Vector3 norm = vec.cpy().nor();
         float angle = MathUtils.atan2(norm.z, norm.x);
         int octant = MathUtils.round( 8 * angle / (2*MathUtils.PI) + 8 + 2 ) % 8;
 
-        System.out.println(octant + " " + vec);
         chara.animate(AnimationType.IDLE, Direction.values()[octant], 1);
-        chara.moveTo(yourPosition.cpy().add(0,.5f,0));
     }
 
     @Override
@@ -241,6 +237,15 @@ public class Castile extends ApplicationAdapter {
         mapShader.setUniformMatrix("u_mvpMatrix", cam.combined);
         map.getMesh().render(mapShader, GL20.GL_TRIANGLES);
         mapShader.end();
+    }
+
+    void drawCharas() {
+        Gdx.gl20.glDisable(GL20.GL_DEPTH_TEST);
+        Decal decal = chara.getDecals()[0];
+        decal.lookAt(cam.position, cam.up);
+        decal.setDimensions(0.5f, 1.0f);
+        decals.add(decal);
+        decals.flush();
     }
 
     void doCameraOrbit(float yaw, float pitch) {

@@ -118,7 +118,6 @@ public class AnimationSet {
         else
             lastDirection = direction;
 
-        System.out.println(lastDirection);
         animation = animations.get(type).get(lastDirection);
         animation.setPlayMode(Animation.PlayMode.REVERSED);
 
