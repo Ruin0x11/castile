@@ -5,7 +5,6 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.*;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g3d.decals.CameraGroupStrategy;
 import com.badlogic.gdx.graphics.g3d.decals.Decal;
 import com.badlogic.gdx.graphics.g3d.decals.DecalBatch;
@@ -13,12 +12,12 @@ import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.*;
 import com.badlogic.gdx.math.collision.Ray;
 import com.badlogic.gdx.utils.viewport.FillViewport;
-import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import com.ruin.castile.chara.AnimationType;
 import com.ruin.castile.chara.Direction;
 import com.ruin.castile.displayable.CharaDisplayable;
 import com.ruin.castile.map.*;
+import com.ruin.castile.util.MPDLoader;
 
 public class Castile extends ApplicationAdapter {
     public static final int MAP_WIDTH = 6;
@@ -69,8 +68,8 @@ public class Castile extends ApplicationAdapter {
             Gdx.app.exit();
         }
 
-        float[] c = {0, 0, 0.75f, 1,
-                0, 0, 0.75f, 1,
+        float[] c = {0.25f, 0.25f, 0.50f, 1,
+                0.25f, 0.25f, 0.50f, 1,
                 0, 0, 0, 1,
                 0, 0, 0, 1};
 
@@ -93,7 +92,8 @@ public class Castile extends ApplicationAdapter {
             Gdx.app.exit();
         }
 
-        map = new GameMapImpl(9, 9);
+        //map = new GameMapImpl(9, 9);
+        map = MPDLoader.load("mp05101.mpd");
 
         GameMapTessellator tessellator = new GameMapTessellator();
         GameMapMesh mapMesh = tessellator.generateMapMesh(map);

@@ -46,6 +46,8 @@ public class GameMapTessellator {
         for (int x = 0; x < map.getWidth(); x++) {
             for (int y = 0; y < map.getLength(); y++) {
                 Tile t = map.getTile(x, y);
+                if(t == null)
+                    continue;
                 float size = 0.5f;
 
                 Vector3 pta = new Vector3(x - size, 0, y - size);
@@ -72,10 +74,10 @@ public class GameMapTessellator {
                         ptd.x, ptd.y, ptd.z, 1, 1, 1, 1, 0, 0,
 
                         // top (+y)
-                        pte.x, pte.y, pte.z, 1, 1, 1, 1, texReg[0].maxX(), texReg[0].maxY(),
-                        ptf.x, ptf.y, ptf.z, 1, 1, 1, 1, texReg[0].maxX(), texReg[0].minY(),
-                        ptg.x, ptg.y, ptg.z, 1, 1, 1, 1, texReg[0].minX(), texReg[0].minY(),
-                        pth.x, pth.y, pth.z, 1, 1, 1, 1, texReg[0].minX(), texReg[0].maxY(),
+                        pte.x, pte.y, pte.z, 1, 1, 1, 1, texReg[0].minX(), texReg[0].maxY(),
+                        ptf.x, ptf.y, ptf.z, 1, 1, 1, 1, texReg[0].maxX(), texReg[0].maxY(),
+                        ptg.x, ptg.y, ptg.z, 1, 1, 1, 1, texReg[0].maxX(), texReg[0].minY(),
+                        pth.x, pth.y, pth.z, 1, 1, 1, 1, texReg[0].minX(), texReg[0].minY(),
 
                         // back (-z) (south)
                         pta.x, pta.y, pta.z, 1, 1, 1, 1, texReg[1].maxX(), texReg[1].maxY(),

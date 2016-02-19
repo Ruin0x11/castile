@@ -22,10 +22,10 @@ public class GameMapImpl implements GameMap {
         tiles = new Tile[w][l];
         for(int i = 0; i < w; i++) {
             for(int j = 0; j < l; j++) {
-                tiles[i][j] = new Tile();
-                Tile.ScreenData dat = new Tile.ScreenData(new Vector2i(24 * (getWidth()-i), 24 * (getLength()-j)), new Vector2i(24, 24));
-                tiles[i][j].screenData.put(Tile.Screen.UPPER, dat);
-                tiles[i][j].addHeight(i*j);
+                //tiles[i][j] = new Tile();
+//                Tile.ScreenData dat = new Tile.ScreenData(new Vector2i(24 * (getWidth()-i), 24 * (getLength()-j)), new Vector2i(24, 24));
+//                tiles[i][j].screenData.put(Tile.Screen.UPPER, dat);
+//                tiles[i][j].addHeight(i*j);
             }
         }
     }

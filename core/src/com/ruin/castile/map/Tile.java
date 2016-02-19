@@ -142,6 +142,10 @@ public class Tile {
         heightData.put(corner, dm);
     }
 
+    public void setScreenData(Screen screen, ScreenData data) {
+        this.screenData.put(screen, data);
+    }
+
     public static class ScreenData {
         public int texUnit;
         public Vector2i texCoords;
@@ -157,6 +161,12 @@ public class Tile {
             texUnit = 0;
             texCoords = coords;
             texRegion = region;
+        }
+
+        public ScreenData(int x, int y, int w, int h) {
+            texUnit = 0;
+            texCoords = new Vector2i(x, y);
+            texRegion = new Vector2i(w, h);
         }
 
     }
