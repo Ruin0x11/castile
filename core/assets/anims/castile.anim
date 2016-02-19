@@ -1,0 +1,28 @@
+{
+    "anims" : [
+    {
+        "name" : "IDLE",
+        "directions" : {
+            "SOUTH" : {
+                    "frames" : ["castile/walk-south-3", "castile/walk-south-2", "castile/walk-south-3", "castile/walk-south-4"],
+                    "offsets" : [[0, 0],[-1, -1],[0, 0],[-1, -1]]
+              },
+            "SOUTHWEST" : {
+                    "frames" : ["castile/walk-southwest-3", "castile/walk-southwest-2", "castile/walk-southwest-3", "castile/walk-southwest-4"],
+                    "offsets" : [[0, 0],[1, 1],[0, 0],[1, 0]]
+              },
+            "WEST" : {
+                    "frames" : ["castile/walk-west-3", "castile/walk-west-2", "castile/walk-west-3", "castile/walk-west-4"],
+                    "offsets" : [[0, 0],[0, 0],[0, 0],[0, 0]]
+              },
+            "NORTHWEST" : {
+                    "frames" : ["castile/walk-northwest-3", "castile/walk-northwest-2", "castile/walk-northwest-3", "castile/walk-northwest-4"],
+                    "offsets" : [[0, 0],[0, 0],[0, 0],[0, 0]]
+              },
+            "NORTH" : {
+                    "frames" : ["castile/walk-north-3", "castile/walk-north-2", "castile/walk-north-3", "castile/walk-north-4"],
+                    "offsets" : [[0, 0],[0, 0],[0, 0],[0, 0]]
+              }
+        }
+    }]
+}

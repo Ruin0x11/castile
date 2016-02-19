@@ -13,10 +13,14 @@ public class CharaDisplayable extends DecalDisplayable {
 
     protected AnimationSet animations;
 
+    AnimationType state;
+
     public CharaDisplayable(Vector3 pos, String animSetName) {
         super(pos);
 
         animations = new AnimationSet(animSetName);
+
+        state = AnimationType.IDLE;
 
         AnimatedDecal decal
                 = AnimatedDecal.newAnimatedDecal(DEFAULT_DIMENSIONS.x,
@@ -37,6 +41,7 @@ public class CharaDisplayable extends DecalDisplayable {
         animatedDecal.stop();
         animatedDecal.setAnimated(animations.get(type, direction, duration));
         animatedDecal.play();
+        state = type;
     }
 
     @Override
@@ -45,5 +50,10 @@ public class CharaDisplayable extends DecalDisplayable {
 
         animatedDecal.setAnimated(animations.get(AnimationType.IDLE, direction));
         animatedDecal.play();
+        state = AnimationType.IDLE;
+    }
+
+    public AnimationType getState() {
+        return this.state;
     }
 }

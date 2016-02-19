@@ -14,9 +14,11 @@
 package com.ruin.castile.chara;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.assets.loaders.TextureAtlasLoader;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.google.gson.*;
 import com.ruin.castile.chara.AnimationType;
@@ -55,11 +57,7 @@ public class AnimationSet {
         FileHandle file
                 = Gdx.files.internal(DIRECTORY_NAME + "/" + name + "." + EXTENSION);
 
-        FileHandle textureFile
-                = Gdx.files.internal(
-                DIRECTORY_NAME + "/" + name + "." + TEXTURE_EXTENSION);
-
-        Texture texture = new Texture(textureFile);
+        TextureAtlas atlas = new TextureAtlas(Gdx.files.internal("packedimages/" + "game" + ".atlas"));
 
         Gson gson = new Gson();
 
@@ -74,25 +72,44 @@ public class AnimationSet {
 
             JsonObject directions = animObject.get("directions").getAsJsonObject();
 
-            for (Map.Entry<String, JsonElement> entr : directions.entrySet()) {
+            for (Direction dir : Direction.values()) {
 
-                Direction dir = Direction.valueOf(entr.getKey());
+                Direction theDir = dir;
+                if(dir.shouldFlipSprite())
+                    theDir = dir.getReverseSpriteDirection();
 
-                JsonObject elements = entr.getValue().getAsJsonObject();
+                JsonElement entr = directions.get(theDir.toString());
 
-                int[][] startCoords = gson.fromJson(elements.get("startCoords"), int[][].class);
-                int[][] sizes = gson.fromJson(elements.get("sizes"), int[][].class);
+                if(entr == null)
+                    continue;
 
-                TextureRegion[] frames = new TextureRegion[startCoords.length];
+                JsonObject elements = entr.getAsJsonObject();
 
-                for (int i = 0; i < startCoords.length; i++) {
-                    frames[i] = new TextureRegion(texture, startCoords[i][0], startCoords[i][1], sizes[i][0], sizes[i][1]);
+                String[] frameNames = gson.fromJson(elements.get("frames"), String[].class);
+                int[][] offsets = gson.fromJson(elements.get("offsets"), int[][].class);
+                TextureRegion[] frames = new TextureRegion[frameNames.length];
+
+                for (int i = 0; i < frameNames.length; i++) {
+                    frames[i] = atlas.findRegion(frameNames[i]);
                     if (dir.shouldFlipSprite()) {
+                        frames[i] = new TextureRegion(frames[i]);
                         frames[i].flip(true, false);
+                        frames[i].setRegionX(frames[i].getRegionX() + offsets[i][1]);
+                        frames[i].setRegionY(frames[i].getRegionY() + offsets[i][0]);
+                        frames[i].setRegionWidth(frames[i].getRegionWidth() + offsets[i][1]);
+                        frames[i].setRegionHeight(frames[i].getRegionHeight() + offsets[i][0]);
+                    }
+                    else {
+                        frames[i].setRegionX(frames[i].getRegionX() + offsets[i][0]);
+                        frames[i].setRegionY(frames[i].getRegionY() + offsets[i][1]);
+                        frames[i].setRegionWidth(frames[i].getRegionWidth() + offsets[i][0]);
+                        frames[i].setRegionHeight(frames[i].getRegionHeight() + offsets[i][1]);
                     }
                 }
 
                 Animation animation = new Animation(1, frames);
+
+                animation.setFrameDuration(1.0f / animation.getKeyFrames().length);
 
                 add(type, dir, animation);
             }
@@ -119,10 +136,10 @@ public class AnimationSet {
             lastDirection = direction;
 
         animation = animations.get(type).get(lastDirection);
-        animation.setPlayMode(Animation.PlayMode.REVERSED);
 
         if (animation == null)
-            return getDefault();
+            animation = getDefault();
+        animation.setPlayMode(Animation.PlayMode.LOOP);
 
         //animation.setFrameDuration(duration / animation.getKeyFrames().length);
 

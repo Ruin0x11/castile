@@ -12,6 +12,9 @@ import com.badlogic.gdx.graphics.g3d.decals.DecalBatch;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.*;
 import com.badlogic.gdx.math.collision.Ray;
+import com.badlogic.gdx.utils.viewport.FillViewport;
+import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.Viewport;
 import com.ruin.castile.chara.AnimationType;
 import com.ruin.castile.chara.Direction;
 import com.ruin.castile.displayable.CharaDisplayable;
@@ -30,6 +33,7 @@ public class Castile extends ApplicationAdapter {
     Mesh backgroundMesh;
     Texture backgroundTexture;
     Camera cam;
+    Viewport viewport;
 
     GameMap map;
 
@@ -44,6 +48,8 @@ public class Castile extends ApplicationAdapter {
 
     int pendingAngle = 0;
     boolean clockwise = false;
+    boolean moving = false;
+    int charaDir = -1;
 
     float lerp = 0.2f;
 
@@ -94,6 +100,7 @@ public class Castile extends ApplicationAdapter {
         map.setMesh(mapMesh);
 
         cam = new PerspectiveCamera(10f, 2f * (4f / 3f), 2f);
+        viewport = new FillViewport(1024, 768, cam);
 
         yourPosition = new Vector3(0, 0, 0);
         yourPositionPending = yourPosition.cpy();
@@ -102,7 +109,7 @@ public class Castile extends ApplicationAdapter {
         cam.lookAt(yourPosition);
 
         decals = new DecalBatch(new CameraGroupStrategy(cam));
-        chara = new CharaDisplayable(new Vector3(0,1.5f,0), "kaitou");
+        chara = new CharaDisplayable(new Vector3(0,1.5f,0), "castile");
         chara.animate(AnimationType.IDLE, Direction.SOUTH, 1);
     }
 
@@ -114,22 +121,24 @@ public class Castile extends ApplicationAdapter {
         if(pendingAngle > 0) {
 
             if(clockwise) {
-                orbitPoint(yourPosition, 5, new Vector3(0, 1, 0));
+                orbitPoint(yourPosition, ROTATION_SPEED, new Vector3(0, 1, 0));
             }
             else {
-                orbitPoint(yourPosition, -5, new Vector3(0, 1, 0));
+                orbitPoint(yourPosition, -ROTATION_SPEED, new Vector3(0, 1, 0));
             }
-            pendingAngle -= 5;
+            pendingAngle -= ROTATION_SPEED;
         }
 
         if(!movementVector.isZero())
             move(movementVector);
+        else
+            moving = false;
+
         float curHeight = map.getHeightAtPoint(yourPosition.x+0.5f, yourPosition.z+0.5f);
         yourPosition.y = curHeight*0.1f;
 
         chara.moveTo(yourPosition.cpy().add(0,.5f,0));
 
-        //System.out.println(curHeight);
         Vector3 diff = yourPosition.cpy().sub(yourPositionPending);
         yourPositionPending.x += diff.x * lerp;
         yourPositionPending.y += diff.y * lerp;
@@ -151,11 +160,18 @@ public class Castile extends ApplicationAdapter {
         Gdx.gl20.glEnable(GL20.GL_CULL_FACE);
         Gdx.gl20.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
 
+        viewport.apply();
+
         drawBackground();
         drawTerrain();
         drawCharas();
 
         Gdx.graphics.setTitle("Frames / Second : " + Gdx.graphics.getFramesPerSecond() + " | " + yourPosition + " " + yourPositionPending);
+    }
+
+    @Override
+    public void resize(int width, int height) {
+        viewport.update(width, height);
     }
 
     float angle = 0;
@@ -174,41 +190,53 @@ public class Castile extends ApplicationAdapter {
             movementVector.add(0, 0, -0.05f);
         }
         if (Gdx.input.isKeyPressed(Input.Keys.L)) {
-            angle = 1;
-            orbitPoint(yourPosition, angle, new Vector3(0, 1, 0));
-        } else if (Gdx.input.isKeyPressed(Input.Keys.J)) {
-            angle = -1;
-            orbitPoint(yourPosition, angle, new Vector3(0, 1, 0));
-        } else {
-            angle = 0;
+            orbitPoint(yourPosition, 1, new Vector3(0, 1, 0));
         }
-        if (Gdx.input.isKeyPressed(Input.Keys.I)) {
+        else if (Gdx.input.isKeyPressed(Input.Keys.J)) {
+            orbitPoint(yourPosition, -1, new Vector3(0, 1, 0));
+        }
+        else if (Gdx.input.isKeyPressed(Input.Keys.I)) {
             orbitPointCamera(yourPosition, 1);
         }
         else if (Gdx.input.isKeyPressed(Input.Keys.K)) {
             orbitPointCamera(yourPosition, -1);
         }
-        if(pendingAngle == 0) {
-            if (Gdx.input.isKeyJustPressed(Input.Keys.A)) {
-                clockwise = false;
-                pendingAngle = 45;
-            }
-            else if (Gdx.input.isKeyJustPressed(Input.Keys.D)) {
-                clockwise = true;
-                pendingAngle = 45;
-            }
+        else if (Gdx.input.isKeyJustPressed(Input.Keys.A) && pendingAngle == 0) {
+            clockwise = false;
+            pendingAngle = 45;
+        }
+        else if (Gdx.input.isKeyJustPressed(Input.Keys.D) && pendingAngle == 0) {
+            clockwise = true;
+            pendingAngle = 45;
+        }
+        else if (Gdx.input.isKeyPressed(Input.Keys.Q)) {
+            Vector3 orbitReturnVector = new Vector3(cam.direction).scl(-0.5f);
+            cameraOffset.add(orbitReturnVector);
+        }
+        else if (Gdx.input.isKeyPressed(Input.Keys.E)) {
+            Vector3 orbitReturnVector = new Vector3(cam.direction).scl(0.5f);
+            cameraOffset.add(orbitReturnVector);
         }
     }
 
     public void move(Vector3 vec) {
-        //TODO: Needs to be in "world Y axis is up" space
-        Vector3 direction = vec.cpy().traMul(cam.view);
+        //modified "Camera.update()" with world Y axis as up vector instead of camera's
+        Vector3 tmp = new Vector3();
+        Matrix4 view = new Matrix4();
+        Vector3 dir = new Vector3(cam.direction.x, 0, cam.direction.z);
+        view.setToLookAt(cam.position, tmp.set(cam.position).add(dir), new Vector3(0, 1, 0));
+
+        Vector3 direction = vec.cpy().traMul(view);
         yourPosition.add(direction.x, 0, direction.z);
         Vector3 norm = vec.cpy().nor();
         float angle = MathUtils.atan2(norm.z, norm.x);
         int octant = MathUtils.round( 8 * angle / (2*MathUtils.PI) + 8 + 2 ) % 8;
 
-        chara.animate(AnimationType.IDLE, Direction.values()[octant], 1);
+        if(!moving || charaDir != octant) {
+            chara.animate(AnimationType.IDLE, Direction.values()[octant], 1);
+            moving = true;
+            charaDir = octant;
+        }
     }
 
     @Override
@@ -216,6 +244,7 @@ public class Castile extends ApplicationAdapter {
         backgroundMesh.dispose();
         backgroundShader.dispose();
         backgroundShader.dispose();
+        map.getMesh().dispose();
     }
 
     void drawBackground() {
@@ -246,55 +275,6 @@ public class Castile extends ApplicationAdapter {
         decal.setDimensions(0.5f, 1.0f);
         decals.add(decal);
         decals.flush();
-    }
-
-    void doCameraOrbit(float yaw, float pitch) {
-        Vector3 camDirection = new Vector3(cam.position).sub(yourPosition).nor();
-        Vector3 camUp = cam.up.nor();
-        Vector3 camRight = new Vector3(camDirection).crs(camUp);
-        Vector3 camRightB = new Vector3(camRight);
-        camUp = camRightB.crs(camDirection);
-        Matrix4 matUpYaw = matrixFromAxisAngle(camUp.nor(), yaw);
-        Matrix4 matRightPitch = matrixFromAxisAngle(camRight.nor(), pitch);
-
-        Vector3 camPosition = new Vector3(cam.position).sub(yourPosition).rot(matUpYaw).rot(matRightPitch).add(yourPosition);
-        cam.position.set(camPosition.x, 20, camPosition.z);
-        cam.lookAt(yourPosition);
-    }
-
-    public Matrix4 matrixFromAxisAngle(Vector3 axis, float angle) {
-
-        Matrix4 mat = new Matrix4();
-
-        float c = MathUtils.cos(angle);
-        float s = MathUtils.sin(angle);
-        float t = 1.0f - c;
-        //  if axis is not already normalised then uncomment this
-        // double magnitude = Math.sqrt(a1.x*a1.x + a1.y*a1.y + a1.z*a1.z);
-        // if (magnitude==0) throw error;
-        // a1.x /= magnitude;
-        // a1.y /= magnitude;
-        // a1.z /= magnitude;
-
-        mat.val[Matrix4.M00] = c + axis.x * axis.x * t;
-        mat.val[Matrix4.M11] = c + axis.y * axis.y * t;
-        mat.val[Matrix4.M22] = c + axis.z * axis.z * t;
-
-
-        float tmp1 = axis.x * axis.y * t;
-        float tmp2 = axis.z * s;
-        mat.val[Matrix4.M10] = tmp1 + tmp2;
-        mat.val[Matrix4.M01] = tmp1 - tmp2;
-        tmp1 = axis.x * axis.z * t;
-        tmp2 = axis.y * s;
-        mat.val[Matrix4.M20] = tmp1 - tmp2;
-        mat.val[Matrix4.M02] = tmp1 + tmp2;
-        tmp1 = axis.y * axis.z * t;
-        tmp2 = axis.x * s;
-        mat.val[Matrix4.M21] = tmp1 + tmp2;
-        mat.val[Matrix4.M12] = tmp1 - tmp2;
-
-        return mat;
     }
 
     final Plane xzPlane = new Plane(new Vector3(0, 1, 0), 0);
