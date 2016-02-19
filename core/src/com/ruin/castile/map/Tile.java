@@ -138,6 +138,10 @@ public class Tile {
         heightData.put(corner, heightData.get(corner) + dm);
     }
 
+    public void setHeight(Corner corner, int dm) {
+        heightData.put(corner, dm);
+    }
+
     public static class ScreenData {
         public int texUnit;
         public Vector2i texCoords;

@@ -78,4 +78,11 @@ public class GameMapImpl implements GameMap {
 
         return tiles[indexX][indexY].getHeightAtPoint(x - indexX, y-indexY);
     }
+
+    @Override
+    public void setTile(Tile tile, int x, int y) {
+        tiles[x][y] = tile;
+    }
+
+
 }

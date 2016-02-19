@@ -21,4 +21,6 @@ public interface GameMap {
 
     float getHeightAtPoint(float x, float y);
 
+    void setTile(Tile tile, int x, int y);
+
 }
