@@ -29,7 +29,6 @@ public class MPDLoader {
 
             int numTiles = in.readUnsignedShort();
             System.out.println(numTiles);
-            //System.exit(0);
             in.skipBytes(16);
             int[][] colors = new int[4][4];
             for(int i = 0; i < 4; i++) {

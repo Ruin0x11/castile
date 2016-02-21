@@ -93,7 +93,7 @@ public class Castile extends ApplicationAdapter {
         }
 
         //map = new GameMapImpl(9, 9);
-        map = MPDLoader.load("mp05101.mpd");
+        map = MPDLoader.load("mp00101.mpd");
 
         GameMapTessellator tessellator = new GameMapTessellator();
         GameMapMesh mapMesh = tessellator.generateMapMesh(map);
