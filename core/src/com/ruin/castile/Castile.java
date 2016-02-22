@@ -43,7 +43,7 @@ public class Castile extends ApplicationAdapter {
     Vector3 yourPositionPending;
     Vector3 cameraOffset = new Vector3(-20, 20, -20);
 
-    Vector3 movementVector = new Vector3(0, 0, 0);
+    Vector3 movementVector = new Vector3(-10, 0, -20);
 
     int pendingAngle = 0;
     boolean clockwise = false;
@@ -93,13 +93,14 @@ public class Castile extends ApplicationAdapter {
         }
 
         //map = new GameMapImpl(9, 9);
-        map = MPDLoader.load("mp00101.mpd");
+        map = MPDLoader.load("mp05101.mpd");
 
         GameMapTessellator tessellator = new GameMapTessellator();
         GameMapMesh mapMesh = tessellator.generateMapMesh(map);
         map.setMesh(mapMesh);
 
         cam = new PerspectiveCamera(10f, 2f * (4f / 3f), 2f);
+        cam.far = 5000;
         viewport = new FillViewport(1024, 768, cam);
 
         yourPosition = new Vector3(0, 0, 0);
@@ -134,7 +135,7 @@ public class Castile extends ApplicationAdapter {
         else
             moving = false;
 
-        float curHeight = map.getHeightAtPoint(yourPosition.x+0.5f, yourPosition.z+0.5f);
+        float curHeight = map.getHeightAtPoint(yourPosition.x+0.5f, yourPosition.z+0.5f, true);
         yourPosition.y = curHeight*0.1f;
 
         chara.moveTo(yourPosition.cpy().add(0,.5f,0));
@@ -152,7 +153,7 @@ public class Castile extends ApplicationAdapter {
 
         Gdx.gl20.glViewport(0, 0, Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight());
         Gdx.gl20.glClearColor(0.2f, 0.2f, 0.2f, 1);
-        Gdx.gl20.glClearDepthf(cam.far * 10);
+        Gdx.gl20.glClearDepthf(cam.far);
 
         Gdx.gl20.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
         Gdx.gl20.glEnable(GL20.GL_TEXTURE_2D);

@@ -1,9 +1,6 @@
 package com.ruin.castile.map;
 
-import com.badlogic.gdx.graphics.Mesh;
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.VertexAttribute;
-import com.badlogic.gdx.graphics.VertexAttributes;
+import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.Vector3;
 import com.ruin.castile.util.Rect2f;
@@ -19,13 +16,13 @@ import gnu.trove.list.array.TShortArrayList;
  */
 public class GameMapMesh {
 
-    Texture textureMap;
+    TextureArray textureMap;
 
     //GameMapMeshElements elements;
 
     Mesh mesh;
 
-    public GameMapMesh(Mesh mesh, Texture textureMap) {
+    public GameMapMesh(Mesh mesh, TextureArray textureMap) {
         this.mesh = mesh;
         this.textureMap = textureMap;
     }
@@ -42,7 +39,7 @@ public class GameMapMesh {
 
     public Mesh getMesh() { return this.mesh; }
 
-    public Texture getTextureMap() { return this.textureMap; }
+    public TextureArray getTextureMap() { return this.textureMap; }
 
     public static class GameMapMeshElements {
 

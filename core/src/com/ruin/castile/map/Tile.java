@@ -28,10 +28,10 @@ public class Tile {
     // also two additional "upper" shadow textures
 
     public enum Corner {
-        UPPER_NORTH_WEST,
-        UPPER_NORTH_EAST,
         UPPER_SOUTH_WEST,
         UPPER_SOUTH_EAST,
+        UPPER_NORTH_WEST,
+        UPPER_NORTH_EAST,
         LOWER_NORTH_NORTH_WEST,
         LOWER_NORTH_NORTH_EAST,
         LOWER_WEST_NORTH_WEST,
@@ -43,10 +43,10 @@ public class Tile {
     }
 
     public enum Screen {
+        WEST,
+        EAST,
         NORTH,
         SOUTH,
-        EAST,
-        WEST,
         UPPER,
         UPPER_SHADOW_ONE,
         UPPER_SHADOW_TWO,
@@ -55,6 +55,8 @@ public class Tile {
     public static final int DEFAULT_DM = 10;
 
     float size = 0.5f;
+
+    int addHeight = 0;
 
     public EnumMap<Corner, Integer> heightData;
 
@@ -96,11 +98,16 @@ public class Tile {
     }
 
     public int getHeight() {
-        return (heightData.get(Corner.UPPER_NORTH_WEST) +
+        return ((heightData.get(Corner.UPPER_NORTH_WEST) +
                 heightData.get(Corner.UPPER_NORTH_EAST) +
                 heightData.get(Corner.UPPER_SOUTH_WEST) +
-                heightData.get(Corner.UPPER_SOUTH_EAST)) / 4;
+                heightData.get(Corner.UPPER_SOUTH_EAST)) / 4);
     }
+
+    public int getCombinedHeight() { return getHeight() + this.addHeight; }
+
+    public void setAddHeight(int addHeight) { this.addHeight = addHeight; }
+    public int getAddHeight(int addHeight) { return this.addHeight; }
 
     public float getHeightAtPoint(float x, float z) {
         Vector3 a, b, c;
@@ -124,7 +131,11 @@ public class Tile {
         float k = (b.y*c.x+a.y*b.x+c.y*a.x-
                 a.y*c.x-b.y*a.x-b.x*c.y);
         float l = -i*a.x-j*a.y-k*a.z;
-        return -(i*x+k*z+l)/j;
+        return (-(i*x+k*z+l)/j);
+    }
+
+    public float getCombinedHeightAtPoint(float x, float z) {
+        return getHeightAtPoint(x, z) + this.addHeight;
     }
 
     public void addHeight(int dm) {
@@ -153,18 +164,18 @@ public class Tile {
 
         public ScreenData() {
             texUnit = 0;
-            texCoords = new Vector2i(154, 308);
-            texRegion = new Vector2i(24, 96);
+            texCoords = new Vector2i(0, 0);
+            texRegion = new Vector2i(24, 24);
         }
 
-        public ScreenData(Vector2i coords, Vector2i region) {
-            texUnit = 0;
+        public ScreenData(int unit, Vector2i coords, Vector2i region) {
+            texUnit = unit;
             texCoords = coords;
             texRegion = region;
         }
 
-        public ScreenData(int x, int y, int w, int h) {
-            texUnit = 0;
+        public ScreenData(int unit, int x, int y, int w, int h) {
+            texUnit = unit;
             texCoords = new Vector2i(x, y);
             texRegion = new Vector2i(w, h);
         }

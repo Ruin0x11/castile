@@ -12,6 +12,7 @@ public class DesktopLauncher {
 		config.width = 1024;
 		config.height = 768;
 		config.vSyncEnabled = true;
+		config.useGL30 = true;
 		TexturePacker.Settings settings = new TexturePacker.Settings();
 		TexturePacker.process(settings, "./images", "./packedimages", "game");
 		new LwjglApplication(new Castile(), config);

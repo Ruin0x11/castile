@@ -1,8 +1,8 @@
 uniform mat4 u_mvpMatrix;                   
 attribute vec4 a_position;                  
-attribute vec2 a_texcoords;
+attribute vec3 a_texcoords;
 attribute vec4 a_color;
-varying vec2 v_texCoords;
+varying vec3 v_texCoords;
 varying vec4 v_color;
 void main()                                 
 {                                           

@@ -47,9 +47,6 @@ public class MPDLoader {
                         texCoordSides[i][3] = in.readUnsignedByte();
                         texCoordSides[i][4] = in.readUnsignedByte();
                         texCoordSides[i][5] = in.readUnsignedByte();
-                    if(i == 4)
-                        System.out.println(texCoordSides[i][4] + " " + texCoordSides[i][5]);
-                   // System.out.println();
                 }
 
                 int[][] heights = new int[3][4];
@@ -72,8 +69,15 @@ public class MPDLoader {
                     tile.setHeight(Tile.Corner.UPPER_SOUTH_EAST, heights[0][1]);
                     tile.setHeight(Tile.Corner.UPPER_NORTH_WEST, heights[0][2]);
                     tile.setHeight(Tile.Corner.UPPER_NORTH_EAST, heights[0][3]);
+                    tile.setAddHeight(moveRestriction);
 
-                    tile.setScreenData(Tile.Screen.UPPER, new Tile.ScreenData(texCoordSides[4][0], texCoordSides[4][1], texCoordSides[4][2], texCoordSides[4][3]));
+                    for(Tile.Screen screen : Tile.Screen.values()) {
+                        int i = screen.ordinal();
+                        if(texCoordSides[i][2] == 0 || texCoordSides[i][2] == 0)
+                            continue;
+                        tile.setScreenData(screen, new Tile.ScreenData(texCoordSides[i][4] % 2,
+                                texCoordSides[i][0], texCoordSides[i][1], texCoordSides[i][2], texCoordSides[i][3]));
+                    }
 
                     map.setTile(tile, xCoord, zCoord);
                     numTiles -= 1;

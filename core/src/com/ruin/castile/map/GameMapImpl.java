@@ -66,7 +66,7 @@ public class GameMapImpl implements GameMap {
     }
 
     @Override
-    public float getHeightAtPoint(float x, float y) {
+    public float getHeightAtPoint(float x, float y, boolean combined) {
         int indexX = (int)x;
         int indexY = (int)y;
 
@@ -76,7 +76,10 @@ public class GameMapImpl implements GameMap {
         if(tiles[indexX][indexY] == null)
             return 0;
 
-        return tiles[indexX][indexY].getHeightAtPoint(x - indexX, y-indexY);
+        if(combined)
+            return tiles[indexX][indexY].getCombinedHeightAtPoint(x - indexX, y-indexY);
+        else
+            return tiles[indexX][indexY].getHeightAtPoint(x - indexX, y-indexY);
     }
 
     @Override

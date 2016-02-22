@@ -19,7 +19,7 @@ public interface GameMap {
 
     boolean hasMesh();
 
-    float getHeightAtPoint(float x, float y);
+    float getHeightAtPoint(float x, float y, boolean combined);
 
     void setTile(Tile tile, int x, int y);
 
