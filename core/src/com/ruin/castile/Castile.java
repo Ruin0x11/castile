@@ -17,6 +17,7 @@ import com.ruin.castile.chara.AnimationType;
 import com.ruin.castile.chara.Direction;
 import com.ruin.castile.displayable.CharaDisplayable;
 import com.ruin.castile.map.*;
+import com.ruin.castile.util.DATLoader;
 import com.ruin.castile.util.MPDLoader;
 
 public class Castile extends ApplicationAdapter {
@@ -41,7 +42,7 @@ public class Castile extends ApplicationAdapter {
 
     Vector3 yourPosition;
     Vector3 yourPositionPending;
-    Vector3 cameraOffset = new Vector3(-20, 20, -20);
+    Vector3 cameraOffset = new Vector3(-20, 15, -20);
 
     Vector3 movementVector = new Vector3(-10, 0, -20);
 
@@ -50,7 +51,7 @@ public class Castile extends ApplicationAdapter {
     boolean moving = false;
     int charaDir = -1;
 
-    float lerp = 0.2f;
+    float lerp = 0.1f;
 
     CharaDisplayable chara;
 
@@ -112,6 +113,8 @@ public class Castile extends ApplicationAdapter {
         decals = new DecalBatch(new CameraGroupStrategy(cam));
         chara = new CharaDisplayable(new Vector3(0,1.5f,0), "castile");
         chara.animate(AnimationType.IDLE, Direction.SOUTH, 1);
+
+        DATLoader.load("mp00101.dat");
     }
 
     @Override

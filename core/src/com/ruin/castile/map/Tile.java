@@ -44,8 +44,8 @@ public class Tile {
 
     public enum Screen {
         WEST,
-        EAST,
         NORTH,
+        EAST,
         SOUTH,
         UPPER,
         UPPER_SHADOW_ONE,

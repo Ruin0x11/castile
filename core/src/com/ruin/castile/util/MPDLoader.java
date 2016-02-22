@@ -73,9 +73,9 @@ public class MPDLoader {
 
                     for(Tile.Screen screen : Tile.Screen.values()) {
                         int i = screen.ordinal();
-                        if(texCoordSides[i][2] == 0 || texCoordSides[i][2] == 0)
+                        if(texCoordSides[i][2] == 0 && texCoordSides[i][3] == 0)
                             continue;
-                        tile.setScreenData(screen, new Tile.ScreenData(texCoordSides[i][4] % 2,
+                        tile.setScreenData(screen, new Tile.ScreenData(texCoordSides[i][4] - 1,
                                 texCoordSides[i][0], texCoordSides[i][1], texCoordSides[i][2], texCoordSides[i][3]));
                     }
 

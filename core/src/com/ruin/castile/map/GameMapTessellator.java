@@ -18,7 +18,9 @@ public class GameMapTessellator {
                 new VertexAttribute(VertexAttributes.Usage.ColorUnpacked, 4, "a_color"),
                 new VertexAttribute(VertexAttributes.Usage.TextureCoordinates, 3, "a_texcoords"));
 
-        TextureArray textureMap = new TextureArray("texA.png", "texB.png");
+        TextureArray textureMap = new TextureArray("mp09901.bmp",
+                "mp09902.bmp", "mp09903.bmp", "mp09904.bmp", "mp09905.bmp",
+                "mp09906.bmp", "mp09907.bmp", "mp09908.bmp", "mp09991.bmp");
 
         /** Cube vertices */
         short[] indices = {0, 2, 1, 0, 3, 2,
@@ -118,13 +120,12 @@ public class GameMapTessellator {
         }
         mesh.setVertices(vertList.toArray());
         mesh.setIndices(indList.toArray());
-
+        //textureMap.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
         mesh.getVertexAttribute(VertexAttributes.Usage.Position).alias = "a_position";
         return new GameMapMesh(mesh, textureMap);
     }
 
     Rect2f getTextureBounds(Tile.ScreenData data, TextureArray textureMap) {
-        System.out.println( data.texCoords+ " " + data.texRegion);
         float minX = (float) data.texCoords.x / (float) textureMap.getWidth();
         float minY = (float) data.texCoords.y / (float) textureMap.getHeight();
 //        minX += (float)(0.5 * ((1.0f / (textureMap.getWidth()/data.texRegion.x)) / data.texRegion.x));
